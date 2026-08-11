@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Grão Turismo Extreme</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;700&family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@200;400;700;900&family=Share+Tech+Mono&display=swap');
         
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
         body { background-color: #1a1a1a; color: #ecf0f1; font-family: 'Montserrat', sans-serif; overflow: hidden; touch-action: none; transition: background-color 1s ease; }
@@ -30,16 +30,11 @@
         }
         
         /* Tela Inicial Minimalista */
-        #startScreen { background: #000; border: none; padding: 40px 20px; }
-        .gt-logo { font-size: 2.2rem; font-weight: 200; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 5px; }
+        #startScreen { background: transparent; border: none; padding: 30px 20px; box-shadow: none; }
+        .gt-logo { font-size: 2.5rem; font-weight: 200; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 5px; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
         .gt-logo strong { font-weight: 700; color: #e74c3c; }
-        .gt-subtitle { font-size: 0.75rem; letter-spacing: 2px; color: #7f8c8d; margin-bottom: 30px; text-transform: uppercase; }
-        
-        .icon-race { width: 80px; height: 40px; margin: 0 auto 30px auto; position: relative; border-bottom: 2px solid #555; }
-        .icon-race::after { content: ''; position: absolute; bottom: 0; left: 10px; width: 40px; height: 15px; background: #e74c3c; transform: skewX(-30deg); border-radius: 4px 10px 0 0; }
-        .icon-race::before { content: ''; position: absolute; bottom: 4px; left: 45px; width: 10px; height: 10px; background: #3498db; border-radius: 50%; box-shadow: -30px 0 0 #3498db; z-index: 2; }
-
-        .modal p { margin-bottom: 25px; font-size: 0.9rem; color: #95a5a6; line-height: 1.5; }
+        .gt-subtitle { font-size: 0.8rem; letter-spacing: 3px; color: #bdc3c7; margin-bottom: 30px; text-transform: uppercase; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+        .credits { font-size: 0.65rem; color: #7f8c8d; margin-top: 30px; letter-spacing: 1px; text-transform: uppercase; }
         
         /* Botões */
         button {
@@ -50,7 +45,8 @@
         .btn-primary { background-color: #e74c3c; border-bottom: 3px solid #c0392b; }
         .btn-secondary { background-color: #34495e; border-bottom: 3px solid #2c3e50; }
         .btn-info { background-color: #2980b9; border-bottom: 3px solid #2471a3; }
-        .btn-group { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+        .btn-dark { background-color: #2c3e50; border-bottom: 3px solid #1a252f; }
+        .btn-group { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 10px; }
 
         /* Semáforo */
         #countdownOverlay {
@@ -75,7 +71,7 @@
         #btnBrake.active { background: #c0392b; transform: scale(0.92); box-shadow: 0 4px 10px rgba(0,0,0,0.6); }
 
         /* Placar */
-        .scoreboard { text-align: left; margin: 15px 0; background: #111; padding: 2px; border-radius: 4px; border: 1px solid #333; }
+        .scoreboard { text-align: left; margin: 15px 0 25px 0; background: #111; padding: 2px; border-radius: 4px; border: 1px solid #333; }
         .score-header { display: flex; font-size: 0.65rem; color: #7f8c8d; padding: 6px 10px; border-bottom: 1px solid #333; text-transform: uppercase; }
         .score-row { display: flex; padding: 10px; border-bottom: 1px solid #222; background: #1a1a1a; align-items: center; font-family: 'Share Tech Mono', monospace; font-size:0.85rem;}
         .score-row:nth-child(even) { background: #151515; }
@@ -92,22 +88,56 @@
 
     <div id="ui">
         <div id="startScreen" class="modal">
-            <div class="icon-race"></div>
+            <!-- Nova Arte Minimalista GT -->
+            <svg width="200" height="60" viewBox="0 0 200 60" style="margin-bottom:15px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.6));">
+                <!-- Listra 1 (Larga - Azul) -->
+                <path d="M 20 60 L 50 0 L 75 0 L 45 60 Z" fill="#3498db" />
+                <!-- Listra 2 (Média - Amarela) -->
+                <path d="M 60 60 L 90 0 L 105 0 L 75 60 Z" fill="#f1c40f" />
+                <!-- Listra 3 (Fina - Vermelha) -->
+                <path d="M 90 60 L 120 0 L 128 0 L 98 60 Z" fill="#e74c3c" />
+                <!-- Texto GT -->
+                <text x="135" y="48" fill="#ecf0f1" font-family="'Montserrat', sans-serif" font-size="44" font-weight="900" font-style="italic">GT</text>
+            </svg>
+
             <div class="gt-logo">Grão <strong>Turismo</strong></div>
             <div class="gt-subtitle">Extreme Racing Edition</div>
-            <p>Aderência do jogador aumentada em 15%. Faça curvas de forma mais fluida, mas não se esqueça de usar os freios nas mais perigosas!</p>
-            <div class="btn-group">
-                <button class="btn-primary" onclick="btnAction(enterFullscreen)">Desenhar Pista</button>
-                <button id="btnLoadTrack" class="btn-secondary" style="display:none;" onclick="btnAction(loadTrack)">Carregar Pista</button>
+            
+            <!-- Seleção de Modo -->
+            <div id="modeSelection">
+                <div class="btn-group">
+                    <button class="btn-primary" onclick="btnAction(() => selectMode('RACE'))">1 vs Bots</button>
+                    <button class="btn-info" onclick="btnAction(() => selectMode('TIME_TRIAL'))">Time Trial</button>
+                </div>
             </div>
+
+            <!-- Seleção de Pista -->
+            <div id="trackSelection" style="display: none;">
+                <p id="modeDesc" style="color:#bdc3c7; font-size:0.8rem; margin-bottom:15px;"></p>
+                <div class="btn-group">
+                    <button class="btn-primary" onclick="btnAction(enterFullscreen)">Desenhar Pista</button>
+                    <button id="btnLoadTrack" class="btn-info" style="display:none;" onclick="btnAction(loadTrack)">Carregar Pista</button>
+                </div>
+                <div class="btn-group" style="margin-top:5px;">
+                    <button class="btn-dark" onclick="btnAction(returnToStart)">Voltar</button>
+                </div>
+            </div>
+
+            <div class="credits">by wgrmoreira</div>
+        </div>
+
+        <div id="drawingHint" style="position: absolute; top: 15%; width: 100%; text-align: center; color: rgba(255,255,255,0.9); font-size: 1.2rem; pointer-events: none; opacity: 0; transition: opacity 0.5s; font-family: 'Montserrat', sans-serif; text-shadow: 0 2px 6px #000;">
+            Desenhe a pista com os Dedos ou Mouse
         </div>
 
         <div id="confirmScreen" class="modal" style="display: none;">
             <h1>Circuito Mapeado</h1>
-            <p>O percurso está pronto. A IA centralizará o mapa e ajustará o asfalto. Preparado?</p>
             <div class="btn-group">
                 <button class="btn-secondary" onclick="btnAction(startDrawingPhase)">Descartar</button>
                 <button class="btn-primary" onclick="btnAction(acceptTrack)">Confirmar Pista</button>
+            </div>
+            <div class="btn-group" style="margin-top:10px;">
+                <button class="btn-dark" onclick="btnAction(returnToStart)">Tela Inicial</button>
             </div>
         </div>
 
@@ -117,7 +147,10 @@
             <div class="btn-group">
                 <button class="btn-info" onclick="btnAction(saveTrack)">Salvar Circuito</button>
                 <button class="btn-primary" onclick="btnAction(repeatTrack)">Nova Bateria</button>
+            </div>
+            <div class="btn-group">
                 <button class="btn-secondary" onclick="btnAction(startDrawingPhase)">Criar Pista</button>
+                <button class="btn-dark" onclick="btnAction(returnToStart)">Tela Inicial</button>
             </div>
         </div>
 
@@ -132,9 +165,9 @@
 
         <div id="hud" class="hud-panel">
             <div style="font-size: 0.75rem; margin-bottom: 6px; font-family: 'Montserrat', sans-serif;">
-                <span style="color:#ff4757">P1: <span id="pLaps">0</span></span> | 
-                <span style="color:#3498db">CAP: <span id="cLaps">0</span></span> | 
-                <span style="color:#2ecc71">MAR: <span id="mLaps">0</span></span>
+                <span style="color:#ff4757">P1: <span id="pLaps">0</span></span>
+                <span id="cLapsWrapper"> | <span style="color:#3498db">CAP: <span id="cLaps">0</span></span></span> 
+                <span id="mLapsWrapper"> | <span style="color:#2ecc71">MAR: <span id="mLaps">0</span></span></span>
             </div>
             T: <span id="timerDisplay">00:00.000</span>
         </div>
@@ -143,16 +176,12 @@
     </div>
 
     <script>
-        // --- SISTEMA DE ÁUDIO BLINDADO CONTRA CRASHES ---
-        let audioCtx, noiseBuffer;
-        let brakeNode, brakeGain;
+        // --- SISTEMA DE ÁUDIO ---
+        let audioCtx, noiseBuffer, brakeNode, brakeGain;
 
         function initAudio() {
             try {
-                if(audioCtx) {
-                    if (audioCtx.state === 'suspended') audioCtx.resume().catch(e=>e);
-                    return;
-                }
+                if(audioCtx) { if (audioCtx.state === 'suspended') audioCtx.resume().catch(e=>e); return; }
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
                 if(!AudioContext) return; 
                 audioCtx = new AudioContext();
@@ -166,28 +195,20 @@
                 brakeNode.buffer = noiseBuffer;
                 brakeNode.loop = true;
                 let brakeFilter = audioCtx.createBiquadFilter();
-                brakeFilter.type = 'bandpass';
-                brakeFilter.frequency.value = 4000;
-                brakeFilter.Q.value = 1.5;
-                brakeGain = audioCtx.createGain();
-                brakeGain.gain.value = 0;
+                brakeFilter.type = 'bandpass'; brakeFilter.frequency.value = 4000; brakeFilter.Q.value = 1.5;
+                brakeGain = audioCtx.createGain(); brakeGain.gain.value = 0;
                 brakeNode.connect(brakeFilter); brakeFilter.connect(brakeGain); brakeGain.connect(audioCtx.destination);
                 brakeNode.start();
-            } catch(e) { console.warn("Áudio não inicializado", e); }
+            } catch(e) {}
         }
 
         function playClick() {
             try {
-                initAudio();
-                if(!audioCtx) return;
+                initAudio(); if(!audioCtx) return;
                 let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(800, audioCtx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.08);
-                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.start(); osc.stop(audioCtx.currentTime + 0.08);
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, audioCtx.currentTime); osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.08);
             } catch(e) {}
         }
 
@@ -196,35 +217,25 @@
                 if(!audioCtx) return;
                 let noise = audioCtx.createBufferSource(); noise.buffer = noiseBuffer;
                 let filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 1200;
-                let gain = audioCtx.createGain();
-                gain.gain.setValueAtTime(0.5, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
-                noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination);
-                noise.start();
+                let gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+                noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination); noise.start();
             } catch(e) {}
         }
 
         function playVictory() {
             try {
                 if(!audioCtx) return;
-                let notes = [523.25, 659.25, 783.99, 1046.50]; 
-                let time = audioCtx.currentTime;
+                let notes = [523.25, 659.25, 783.99, 1046.50]; let time = audioCtx.currentTime;
                 notes.forEach((freq, i) => {
                     let osc = audioCtx.createOscillator(); let gain = audioCtx.createGain();
                     osc.type = 'triangle'; osc.frequency.value = freq;
-                    gain.gain.setValueAtTime(0, time + i*0.12);
-                    gain.gain.linearRampToValueAtTime(0.2, time + i*0.12 + 0.03);
-                    gain.gain.exponentialRampToValueAtTime(0.01, time + i*0.12 + 0.4);
-                    osc.connect(gain); gain.connect(audioCtx.destination);
-                    osc.start(time + i*0.12); osc.stop(time + i*0.12 + 0.4);
+                    gain.gain.setValueAtTime(0, time + i*0.12); gain.gain.linearRampToValueAtTime(0.2, time + i*0.12 + 0.03); gain.gain.exponentialRampToValueAtTime(0.01, time + i*0.12 + 0.4);
+                    osc.connect(gain); gain.connect(audioCtx.destination); osc.start(time + i*0.12); osc.stop(time + i*0.12 + 0.4);
                 });
             } catch(e) {}
         }
 
-        function btnAction(func) {
-            playClick();
-            setTimeout(func, 100);
-        }
+        function btnAction(func) { playClick(); setTimeout(func, 100); }
 
         function updateAudioEngine(speed, isBraking) {
             try {
@@ -232,9 +243,7 @@
                 if(gameState === 'RACING' || gameState === 'COUNTDOWN') {
                     if(isBraking && speed > 3) brakeGain.gain.setTargetAtTime(0.15, audioCtx.currentTime, 0.05);
                     else brakeGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
-                } else {
-                    brakeGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
-                }
+                } else brakeGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
             } catch(e) {}
         }
 
@@ -245,24 +254,26 @@
         const endScreen = document.getElementById('endScreen'); const countdownOverlay = document.getElementById('countdownOverlay');
         const hud = document.getElementById('hud'); const btnBrake = document.getElementById('btnBrake');
         const btnLoadTrack = document.getElementById('btnLoadTrack'); const timerDisplay = document.getElementById('timerDisplay');
-        const scoreboardData = document.getElementById('scoreboardData');
+        const scoreboardData = document.getElementById('scoreboardData'); const drawingHint = document.getElementById('drawingHint');
 
         let width, height, gameState = 'START', rawPoints = [], points = [], previewPoints = [], isDrawing = false;
+        let gameMode = 'RACE'; // 'RACE' ou 'TIME_TRIAL'
+        let trackRecords = []; // Guarda os recordes da pista
         
-        // FÍSICA BALANCEADA
+        // FÍSICA E BALANCEAMENTO
         const SPACING = 5;             
         const MAX_SPEED = 11.5;        
         const ACCELERATION = 0.06;     
         const BRAKING_FORCE = 0.35;    
         const BASE_MIN_SPEED = 2.0;      
-        
-        // Ajustado DERAIL_THRESHOLD (Tolerância aumentada em 15%: de 1.27 -> 1.46)
         const DERAIL_THRESHOLD = 1.46;  
         const SAFE_CORNER_SPEED = 4.5; 
         const MIN_DRAW_DIST = 10;
         const TOTAL_LAPS = 5;
 
         let startTime = 0, elapsedTime = 0, animationFrameId, finishers = [];
+        let smokeParticles = [];
+        let clouds = [], birds = [];
 
         const BIOMES = [
             { name: 'FOREST', bg: '#27ae60', props: [ {c:'#1e8449', tip:'#58d68d', base:'#145a32'}, {c:'#196f3d', tip:'#52be80', base:'#0b5345'} ] },
@@ -271,7 +282,61 @@
         ];
         let currentBiome = BIOMES[0], sceneryProps = [], grandstands = [];
 
-        if (localStorage.getItem('gtTrackData')) btnLoadTrack.style.display = 'inline-block';
+        // Controle de Menus Iniciais
+        if (localStorage.getItem('gtTrackData')) {
+            document.getElementById('btnLoadTrack').style.display = 'inline-block';
+        }
+
+        function selectMode(mode) {
+            gameMode = mode;
+            document.getElementById('modeSelection').style.display = 'none';
+            document.getElementById('trackSelection').style.display = 'block';
+            if(mode === 'RACE') document.getElementById('modeDesc').innerText = "Modo: 1 vs Bots (5 Voltas)";
+            if(mode === 'TIME_TRIAL') document.getElementById('modeDesc').innerText = "Modo: Time Trial Solo (Bata seus Recordes)";
+            
+            if (localStorage.getItem('gtTrackData')) document.getElementById('btnLoadTrack').style.display = 'inline-block';
+            else document.getElementById('btnLoadTrack').style.display = 'none';
+        }
+
+        function returnToStart() {
+            updateAudioEngine(0, false);
+            cancelAnimationFrame(animationFrameId);
+            hideAllScreens();
+            gameState = 'START';
+            document.getElementById('modeSelection').style.display = 'block';
+            document.getElementById('trackSelection').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+            document.body.style.backgroundColor = '#1a1a1a';
+            ctx.clearRect(0, 0, width, height);
+            
+            if (localStorage.getItem('gtTrackData')) document.getElementById('btnLoadTrack').style.display = 'inline-block';
+        }
+
+        function initSky() {
+            clouds = []; birds = [];
+            for(let i=0; i<8; i++) clouds.push({ 
+                x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, 
+                size: Math.random() * 50 + 50, speed: Math.random() * 0.3 + 0.1, 
+                opacity: Math.random() * 0.3 + 0.3 
+            });
+            for(let f=0; f<3; f++) {
+                let bx = Math.random() * window.innerWidth; let by = Math.random() * window.innerHeight;
+                let angle = (Math.random() - 0.5) * 0.5; let speed = Math.random() * 1.5 + 1.0;
+                for(let i=0; i<5; i++) {
+                    birds.push({ 
+                        x: bx + (Math.random()-0.5)*50, y: by + (Math.random()-0.5)*50, 
+                        speed: speed + (Math.random()-0.5)*0.2, angle: angle, flap: Math.random() * Math.PI * 2 
+                    });
+                }
+            }
+        }
+        initSky();
+
+        function spawnSmoke(x, y) {
+            for(let i=0; i<2; i++) {
+                smokeParticles.push({ x: x + (Math.random()-0.5)*10, y: y + (Math.random()-0.5)*10, vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5, life: 1.0, size: Math.random()*4 + 4 });
+            }
+        }
 
         class Car {
             constructor(name, colorBase, isBot, offset, botProfile = null) {
@@ -295,21 +360,22 @@
 
                 if (this.isDerailed) {
                     this.blink = !this.blink;
-                    if (now > this.derailTimer) { this.isDerailed = false; this.speed = 0.5; this.blink = false; } 
-                    else return;
-                }
-
-                if (this.isBot) this.processAILogic(now);
-
-                let myMaxSpeed = this.isBot ? this.botProfile.maxSpeed : MAX_SPEED; 
-                let myAccel = this.isBot ? this.botProfile.accel : ACCELERATION;
-
-                if (this.isBraking) {
-                    this.speed -= BRAKING_FORCE;
+                    spawnSmoke(this.x, this.y);
+                    this.speed *= 0.88; 
                     if (this.speed < BASE_MIN_SPEED) this.speed = BASE_MIN_SPEED;
+                    if (now > this.derailTimer) { this.isDerailed = false; this.blink = false; } 
                 } else {
-                    this.speed += myAccel;
-                    if (this.speed > myMaxSpeed) this.speed = myMaxSpeed;
+                    if (this.isBot) this.processAILogic(now);
+                    let myMaxSpeed = this.isBot ? this.botProfile.maxSpeed : MAX_SPEED; 
+                    let myAccel = this.isBot ? this.botProfile.accel : ACCELERATION;
+
+                    if (this.isBraking) {
+                        this.speed -= BRAKING_FORCE;
+                        if (this.speed < BASE_MIN_SPEED) this.speed = BASE_MIN_SPEED;
+                    } else {
+                        this.speed += myAccel;
+                        if (this.speed > myMaxSpeed) this.speed = myMaxSpeed;
+                    }
                 }
 
                 this.t += this.speed / SPACING;
@@ -325,8 +391,9 @@
             }
 
             processAILogic(now) {
-                if (now - this.lastBotUpdate > 250) {
-                    this.botErrorFactor = 0.90 + (Math.random() * 0.15); 
+                if (now - this.lastBotUpdate > 300) {
+                    if (Math.random() < 0.30) this.botErrorFactor = 1.5; 
+                    else this.botErrorFactor = 0.85; 
                     this.lastBotUpdate = now;
                 }
                 
@@ -335,20 +402,15 @@
                 let maxForce = 0;
 
                 for(let i = 2; i <= lookAheadFrames; i += 4) {
-                    let n0 = (idx + i) % points.length;
-                    let n1 = (n0 + 4) % points.length;
-                    let n2 = (n0 + 8) % points.length;
-                    
+                    let n0 = (idx + i) % points.length; let n1 = (n0 + 4) % points.length; let n2 = (n0 + 8) % points.length;
                     let a1 = Math.atan2(points[n1].y - points[n0].y, points[n1].x - points[n0].x);
                     let a2 = Math.atan2(points[n2].y - points[n1].y, points[n2].x - points[n1].x);
-                    
                     let angleDiff = a2 - a1;
                     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
                     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
                     
                     let curveSharpness = Math.pow(Math.abs(angleDiff), 1.1) * 1.5;
                     let predictedForce = Math.abs(angleDiff) * this.speed * (1 + curveSharpness);
-                    
                     if(predictedForce > maxForce) maxForce = predictedForce;
                 }
 
@@ -369,13 +431,9 @@
             checkDerail() {
                 if (points.length < 10) return;
                 let idx = Math.floor(this.t); 
-                let n0 = idx;
-                let n1 = (idx + 4) % points.length; 
-                let n2 = (idx + 8) % points.length; 
-                
+                let n0 = idx; let n1 = (idx + 4) % points.length; let n2 = (idx + 8) % points.length; 
                 let a1 = Math.atan2(points[n1].y - points[n0].y, points[n1].x - points[n0].x);
                 let a2 = Math.atan2(points[n2].y - points[n1].y, points[n2].x - points[n1].x);
-                
                 let angleDiff = a2 - a1;
                 while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
                 while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
@@ -383,10 +441,11 @@
                 let curveSharpness = Math.pow(Math.abs(angleDiff), 1.1) * 1.5;
                 let centrifugal = Math.abs(angleDiff) * this.speed * (1 + curveSharpness);
                 
-                if (centrifugal > DERAIL_THRESHOLD && this.speed > SAFE_CORNER_SPEED) {
+                let myThreshold = this.isBot ? DERAIL_THRESHOLD * 1.30 : DERAIL_THRESHOLD;
+
+                if (centrifugal > myThreshold && this.speed > SAFE_CORNER_SPEED && !this.isDerailed) {
                     this.isDerailed = true;
-                    this.derailTimer = performance.now() + 1500; 
-                    this.speed = 0; 
+                    this.derailTimer = performance.now() + 1800; 
                     if(this === playerCar) playCrash();
                 }
             }
@@ -395,10 +454,7 @@
                 if (this.blink) return; 
                 ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
 
-                if(!this.finished) {
-                    ctx.shadowColor = 'rgba(0,0,0,0.6)';
-                    ctx.shadowOffsetY = 4; ctx.shadowOffsetX = 2; ctx.shadowBlur = 4;
-                }
+                if(!this.finished) { ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowOffsetY = 4; ctx.shadowOffsetX = 2; ctx.shadowBlur = 4; }
                 ctx.fillStyle = this.colorBase; ctx.fillRect(-12, -7, 24, 14);
                 ctx.shadowColor = 'transparent'; 
                 
@@ -415,14 +471,9 @@
         }
 
         let playerCar = new Car("Você", "#ff4757", false, 0);
-        
-        let capBot = new Car("CAP-Bot", "#3498db", true, 14, 
-            { maxSpeed: 9.76, accel: 0.064, lookAheadMult: 2.2, thresholdMult: 0.96 });
-            
-        let mariaBot = new Car("MARIA-Bot", "#2ecc71", true, -14, 
-            { maxSpeed: 9.44, accel: 0.056, lookAheadMult: 2.8, thresholdMult: 0.88 });
-            
-        let allCars = [capBot, playerCar, mariaBot];
+        let capBot = new Car("CAP-Bot", "#3498db", true, 14, { maxSpeed: 9.76, accel: 0.064, lookAheadMult: 3.5, thresholdMult: 0.98 });
+        let mariaBot = new Car("MARIA-Bot", "#2ecc71", true, -14, { maxSpeed: 9.44, accel: 0.056, lookAheadMult: 4.2, thresholdMult: 0.90 });
+        let allCars = [];
 
         function formatTime(ms) {
             let total = ms / 1000; let mins = Math.floor(total / 60); let secs = (total % 60).toFixed(3);
@@ -435,7 +486,7 @@
             document.getElementById('mLaps').innerText = Math.min(mariaBot.laps, TOTAL_LAPS);
         }
 
-        function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; }
+        function resize() { width = window.innerWidth; height = window.innerHeight; canvas.width = width; canvas.height = height; initSky(); }
         window.addEventListener('resize', resize); resize();
 
         function enterFullscreen() {
@@ -447,15 +498,17 @@
         function hideAllScreens() {
             startScreen.style.display = 'none'; confirmScreen.style.display = 'none';
             endScreen.style.display = 'none'; countdownOverlay.style.display = 'none';
-            hud.style.display = 'none'; btnBrake.style.display = 'none';
+            hud.style.display = 'none'; btnBrake.style.display = 'none'; drawingHint.style.opacity = 0;
         }
 
         function startDrawingPhase() {
             hideAllScreens(); gameState = 'DRAWING';
-            rawPoints = []; points = []; previewPoints = []; sceneryProps = []; grandstands = [];
+            rawPoints = []; points = []; previewPoints = []; sceneryProps = []; grandstands = []; smokeParticles = [];
+            trackRecords = []; // Nova pista limpa os recordes passados da memoria
             document.body.style.backgroundColor = '#1a1a1a'; ctx.clearRect(0, 0, width, height);
-            ctx.fillStyle = '#7f8c8d'; ctx.font = '16px Montserrat'; ctx.textAlign = 'center';
-            ctx.fillText("Trace o percurso em movimento único.", width / 2, height / 2);
+            
+            drawingHint.style.opacity = 1;
+            setTimeout(() => { drawingHint.style.opacity = 0; }, 2500);
         }
 
         function centerTrack(ptsArray) {
@@ -476,9 +529,7 @@
             sceneryProps = [];
             for (let i = 0; i < 400; i++) {
                 let px = Math.random() * width; let py = Math.random() * height; let valid = true;
-                for (let pt of points) {
-                    if (Math.hypot(pt.x - px, pt.y - py) < 65) { valid = false; break; }
-                }
+                for (let pt of points) if (Math.hypot(pt.x - px, pt.y - py) < 65) { valid = false; break; }
                 if (valid) {
                     let style = currentBiome.props[Math.floor(Math.random() * currentBiome.props.length)];
                     sceneryProps.push({x: px, y: py, style: style, size: Math.random() * 12 + 10});
@@ -510,33 +561,57 @@
 
         function drawScenery() {
             ctx.fillStyle = currentBiome.bg; ctx.fillRect(0, 0, width, height);
+
+            // Arvores
             for (let prop of sceneryProps) {
-                ctx.save();
-                ctx.translate(prop.x + prop.size * 0.7, prop.y + prop.size * 0.7);
-                ctx.rotate(Math.PI / 4);
-                ctx.scale(1.5, 0.6);
-                ctx.beginPath();
-                ctx.arc(0, 0, prop.size, 0, Math.PI * 2);
-                ctx.fillStyle = 'rgba(0,0,0,0.3)';
-                ctx.fill();
-                ctx.restore();
+                ctx.save(); ctx.translate(prop.x + prop.size * 0.7, prop.y + prop.size * 0.7); ctx.rotate(Math.PI / 4); ctx.scale(1.5, 0.6);
+                ctx.beginPath(); ctx.arc(0, 0, prop.size, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill(); ctx.restore();
                 
                 let grad = ctx.createRadialGradient(prop.x - prop.size*0.25, prop.y - prop.size*0.25, 0, prop.x, prop.y, prop.size);
                 grad.addColorStop(0, prop.style.tip); grad.addColorStop(0.35, prop.style.c); grad.addColorStop(1, prop.style.base);
-                ctx.beginPath(); ctx.arc(prop.x, prop.y, prop.size, 0, Math.PI * 2);
-                ctx.fillStyle = grad; ctx.fill();
+                ctx.beginPath(); ctx.arc(prop.x, prop.y, prop.size, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
             }
 
             let now = performance.now();
             for (let stand of grandstands) {
                 ctx.save(); ctx.translate(stand.x, stand.y); ctx.rotate(stand.angle);
-                ctx.fillStyle = '#555'; ctx.fillRect(-85, -16, 170, 32);
-                ctx.fillStyle = '#333'; ctx.fillRect(-83, -13, 166, 26);
+                ctx.fillStyle = '#555'; ctx.fillRect(-85, -16, 170, 32); ctx.fillStyle = '#333'; ctx.fillRect(-83, -13, 166, 26);
                 for(let p of stand.crowd) {
                     let bounce = Math.abs(Math.sin(now/150 + p.phase)) * 4.5;
                     ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.ox, p.oy - bounce, 2, 0, Math.PI*2); ctx.fill();
                 }
                 ctx.restore();
+            }
+        }
+
+        function drawSky() {
+            clouds.forEach(c => {
+                ctx.fillStyle = `rgba(0, 0, 0, 0.15)`; ctx.beginPath();
+                let sx = c.x + 50; let sy = c.y + 50; 
+                ctx.arc(sx, sy, c.size, 0, Math.PI*2); ctx.arc(sx + c.size*0.5, sy - c.size*0.3, c.size*0.7, 0, Math.PI*2); ctx.arc(sx + c.size, sy, c.size*0.8, 0, Math.PI*2); ctx.fill();
+            });
+
+            clouds.forEach(c => {
+                c.x += c.speed; if(c.x > width + c.size * 2) c.x = -c.size * 2;
+                ctx.fillStyle = `rgba(255, 255, 255, ${c.opacity})`; ctx.beginPath();
+                ctx.arc(c.x, c.y, c.size, 0, Math.PI*2); ctx.arc(c.x + c.size*0.5, c.y - c.size*0.3, c.size*0.7, 0, Math.PI*2); ctx.arc(c.x + c.size, c.y, c.size*0.8, 0, Math.PI*2); ctx.fill();
+            });
+
+            ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+            birds.forEach(b => {
+                b.x += b.speed * Math.cos(b.angle); b.y += b.speed * Math.sin(b.angle);
+                if(b.x > width + 20) b.x = -20; if(b.y > height + 20) b.y = -20; if(b.y < -20) b.y = height + 20;
+                b.flap += 0.2; let flapY = Math.sin(b.flap) * 4;
+                ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.quadraticCurveTo(b.x - 5, b.y - flapY, b.x - 10, b.y - 5); ctx.moveTo(b.x, b.y); ctx.quadraticCurveTo(b.x - 5, b.y + flapY, b.x - 10, b.y + 5); ctx.stroke();
+            });
+        }
+
+        function drawAndUpdateSmoke() {
+            for(let i = smokeParticles.length - 1; i >= 0; i--) {
+                let p = smokeParticles[i];
+                p.x += p.vx; p.y += p.vy; p.life -= 0.04; p.size += 0.4;
+                if (p.life <= 0) smokeParticles.splice(i, 1);
+                else { ctx.fillStyle = `rgba(220, 220, 220, ${p.life * 0.5})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); }
             }
         }
 
@@ -546,12 +621,9 @@
             let dist = Math.hypot(p0.x - pN.x, p0.y - pN.y);
             if (dist < MIN_DRAW_DIST) return pts;
             
-            let dStartX = p0.x - p1.x; let dStartY = p0.y - p1.y; 
-            let mStart = Math.hypot(dStartX, dStartY); 
+            let dStartX = p0.x - p1.x; let dStartY = p0.y - p1.y; let mStart = Math.hypot(dStartX, dStartY); 
             if (mStart > 0) { dStartX /= mStart; dStartY /= mStart; } else { dStartX = 1; dStartY = 0; }
-            
-            let dEndX = pN.x - pN_minus_1.x; let dEndY = pN.y - pN_minus_1.y; 
-            let mEnd = Math.hypot(dEndX, dEndY); 
+            let dEndX = pN.x - pN_minus_1.x; let dEndY = pN.y - pN_minus_1.y; let mEnd = Math.hypot(dEndX, dEndY); 
             if (mEnd > 0) { dEndX /= mEnd; dEndY /= mEnd; } else { dEndX = 1; dEndY = 0; }
             
             let cp1 = { x: pN.x + dEndX * (dist * 0.4), y: pN.y + dEndY * (dist * 0.4) };
@@ -597,8 +669,7 @@
 
         function makeUniform(pts, spacing) {
             if (!pts || pts.length === 0) return pts;
-            let newPoints = [pts[0]]; let currentDist = 0;
-            let guard = 0;
+            let newPoints = [pts[0]]; let currentDist = 0; let guard = 0;
             for (let i = 1; i <= pts.length; i++) {
                 let p0 = pts[i - 1]; let p1 = pts[i % pts.length]; let dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
                 if (dist === 0) continue;
@@ -615,8 +686,7 @@
 
         function finishDrawingPhase() {
             if (rawPoints.length < 15) { startDrawingPhase(); return; }
-            gameState = 'CONFIRM'; 
-            try { playClick(); } catch(e) {}
+            gameState = 'CONFIRM'; try { playClick(); } catch(e) {}
             let closedRaw = closeTrackBezier(rawPoints); previewPoints = smoothTrack(closedRaw, 2);
             confirmScreen.style.display = 'block';
         }
@@ -637,11 +707,25 @@
         }
 
         function repeatTrack() { hideAllScreens(); startCountdown(); }
+        
         function saveTrack() {
-            try { localStorage.setItem('gtTrackData', JSON.stringify({ raw: rawPoints })); alert("Circuito salvo!"); btnLoadTrack.style.display = 'inline-block'; } catch(e) {}
+            try { 
+                localStorage.setItem('gtTrackData', JSON.stringify({ raw: rawPoints, records: trackRecords })); 
+                alert("Circuito e Recordes salvos com sucesso!"); 
+                document.getElementById('btnLoadTrack').style.display = 'inline-block'; 
+            } catch(e) {}
         }
+        
         function loadTrack() {
-            try { let saved = localStorage.getItem('gtTrackData'); if (saved) { rawPoints = JSON.parse(saved).raw; acceptTrack(); } } catch(e) {}
+            try { 
+                let saved = localStorage.getItem('gtTrackData'); 
+                if (saved) { 
+                    let parsed = JSON.parse(saved);
+                    rawPoints = parsed.raw; 
+                    trackRecords = parsed.records || [];
+                    acceptTrack(); 
+                } 
+            } catch(e) {}
         }
 
         function addRawPoint(x, y) {
@@ -663,7 +747,20 @@
 
         function startCountdown() {
             gameState = 'COUNTDOWN';
-            finishers = [];
+            finishers = []; smokeParticles = [];
+            
+            if (gameMode === 'TIME_TRIAL') {
+                allCars = [playerCar];
+                playerCar.offset = 0;
+                document.getElementById('cLapsWrapper').style.display = 'none';
+                document.getElementById('mLapsWrapper').style.display = 'none';
+            } else {
+                playerCar.offset = 0;
+                allCars = [capBot, playerCar, mariaBot];
+                document.getElementById('cLapsWrapper').style.display = 'inline';
+                document.getElementById('mLapsWrapper').style.display = 'inline';
+            }
+
             allCars.forEach(car => car.reset());
             updateLapDisplays();
             countdownOverlay.style.display = 'flex';
@@ -700,12 +797,30 @@
                 
                 if(finishers[0] === playerCar) playVictory(); 
                 
-                let html = `<div class="score-header"><div class="col-pos">POS</div><div class="col-name">PILOTO</div><div class="col-time">TEMPO</div></div>`;
-                let classes = ['pos-1', 'pos-2', 'pos-3'];
-                finishers.forEach((car, index) => {
-                    html += `<div class="score-row"><div class="col-pos ${classes[index]}">${index + 1}</div>
-                             <div class="col-name">${car.name}</div><div class="col-time">${formatTime(car.finishTime)}</div></div>`;
-                });
+                let html = '';
+                
+                if(gameMode === 'RACE') {
+                    html += `<div class="score-header"><div class="col-pos">POS</div><div class="col-name">PILOTO</div><div class="col-time">TEMPO</div></div>`;
+                    let classes = ['pos-1', 'pos-2', 'pos-3'];
+                    finishers.forEach((car, index) => {
+                        html += `<div class="score-row"><div class="col-pos ${classes[index]}">${index + 1}</div>
+                                 <div class="col-name">${car.name}</div><div class="col-time">${formatTime(car.finishTime)}</div></div>`;
+                    });
+                } else {
+                    // Lógica Time Trial
+                    trackRecords.push(playerCar.finishTime);
+                    trackRecords.sort((a, b) => a - b);
+                    trackRecords = trackRecords.slice(0, 5); // Mantem os 5 melhores
+                    
+                    html += `<div class="score-header"><div class="col-pos">TOP</div><div class="col-name">RECORDES (TIME TRIAL)</div><div class="col-time">TEMPO</div></div>`;
+                    let classes = ['pos-1', 'pos-2', 'pos-3', '', ''];
+                    trackRecords.forEach((time, index) => {
+                        let isNew = (time === playerCar.finishTime) ? " <span style='color:#f1c40f;font-size:0.7rem'>(NOVO)</span>" : "";
+                        html += `<div class="score-row"><div class="col-pos ${classes[index]}">${index + 1}</div>
+                                 <div class="col-name">Recorde ${index + 1}${isNew}</div><div class="col-time">${formatTime(time)}</div></div>`;
+                    });
+                }
+
                 scoreboardData.innerHTML = html;
                 endScreen.style.display = 'block';
             }
@@ -743,7 +858,12 @@
 
         function loop() {
             if (gameState !== 'RACING') return; update();
-            ctx.clearRect(0, 0, width, height); drawScenery(); drawTrack(points); allCars.forEach(car => car.draw());
+            ctx.clearRect(0, 0, width, height); 
+            drawScenery(); 
+            drawSky(); 
+            drawTrack(points); 
+            allCars.forEach(car => car.draw());
+            drawAndUpdateSmoke(); 
             animationFrameId = requestAnimationFrame(loop);
         }
         
@@ -756,7 +876,7 @@
                     ctx.strokeStyle = '#34495e'; ctx.lineWidth = 40; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
                 }
             } else if (gameState === 'CONFIRM') { ctx.clearRect(0, 0, width, height); drawTrack(previewPoints); } 
-              else if (gameState === 'COUNTDOWN') { ctx.clearRect(0, 0, width, height); drawScenery(); drawTrack(points); allCars.forEach(car => car.draw()); }
+              else if (gameState === 'COUNTDOWN') { ctx.clearRect(0, 0, width, height); drawScenery(); drawSky(); drawTrack(points); allCars.forEach(car => car.draw()); }
             requestAnimationFrame(renderInterface);
         }
         renderInterface();

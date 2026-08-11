@@ -95,7 +95,7 @@
             <div class="icon-race"></div>
             <div class="gt-logo">Grão <strong>Turismo</strong></div>
             <div class="gt-subtitle">Extreme Racing Edition</div>
-            <p>Derrapagem perdoando um pouco mais (10% mais aderência) e Bots 15% mais lentos para corridas fluidas e estratégicas.</p>
+            <p>Aderência do jogador aumentada em 15%. Faça curvas de forma mais fluida, mas não se esqueça de usar os freios nas mais perigosas!</p>
             <div class="btn-group">
                 <button class="btn-primary" onclick="btnAction(enterFullscreen)">Desenhar Pista</button>
                 <button id="btnLoadTrack" class="btn-secondary" style="display:none;" onclick="btnAction(loadTrack)">Carregar Pista</button>
@@ -256,8 +256,8 @@
         const BRAKING_FORCE = 0.35;    
         const BASE_MIN_SPEED = 2.0;      
         
-        // Ajustado DERAIL_THRESHOLD (Tolerância aumentada em 10%: de 1.15 -> 1.27)
-        const DERAIL_THRESHOLD = 1.27;  
+        // Ajustado DERAIL_THRESHOLD (Tolerância aumentada em 15%: de 1.27 -> 1.46)
+        const DERAIL_THRESHOLD = 1.46;  
         const SAFE_CORNER_SPEED = 4.5; 
         const MIN_DRAW_DIST = 10;
         const TOTAL_LAPS = 5;
@@ -414,14 +414,13 @@
             }
         }
 
-        // BOTS REDUZIDOS EM 15% (Aceleração e Velocidade Final diminuídas adicionalmente em relação ao patch anterior)
         let playerCar = new Car("Você", "#ff4757", false, 0);
         
         let capBot = new Car("CAP-Bot", "#3498db", true, 14, 
-            { maxSpeed: 8.3, accel: 0.054, lookAheadMult: 2.2, thresholdMult: 0.96 });
+            { maxSpeed: 9.76, accel: 0.064, lookAheadMult: 2.2, thresholdMult: 0.96 });
             
         let mariaBot = new Car("MARIA-Bot", "#2ecc71", true, -14, 
-            { maxSpeed: 8.0, accel: 0.047, lookAheadMult: 2.8, thresholdMult: 0.88 });
+            { maxSpeed: 9.44, accel: 0.056, lookAheadMult: 2.8, thresholdMult: 0.88 });
             
         let allCars = [capBot, playerCar, mariaBot];
 

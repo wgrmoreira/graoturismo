@@ -12,7 +12,6 @@
         canvas { display: block; width: 100vw; height: 100vh; }
         #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         
-        /* HUD Superior */
         .hud-panel {
             position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
             background: rgba(0, 0, 0, 0.85); padding: 10px 15px; border-radius: 8px;
@@ -21,34 +20,31 @@
         }
         .hud-panel span { font-size: 1rem; font-family: 'Share Tech Mono', monospace; }
         
-        /* Modais */
         .modal {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(10, 10, 10, 0.95); padding: 30px; border-radius: 10px;
+            background: rgba(15, 15, 15, 0.96); padding: 30px; border-radius: 10px;
             text-align: center; pointer-events: auto; z-index: 10; box-shadow: 0 15px 40px rgba(0,0,0,0.8);
             width: 95%; max-width: 500px; border: 1px solid #333;
         }
         
-        /* Tela Inicial Minimalista */
         #startScreen { background: transparent; border: none; padding: 30px 20px; box-shadow: none; }
         .gt-logo { font-size: 2.5rem; font-weight: 200; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 5px; text-shadow: 0 4px 10px rgba(0,0,0,0.8); }
-        .gt-logo strong { font-weight: 700; color: #e74c3c; }
-        .gt-subtitle { font-size: 0.8rem; letter-spacing: 3px; color: #bdc3c7; margin-bottom: 30px; text-transform: uppercase; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
+        .gt-logo strong { font-weight: 700; color: #cc4135; }
+        .gt-subtitle { font-size: 0.8rem; letter-spacing: 3px; color: #95a5a6; margin-bottom: 30px; text-transform: uppercase; text-shadow: 0 2px 5px rgba(0,0,0,0.8); }
         .credits { font-size: 0.65rem; color: #7f8c8d; margin-top: 30px; letter-spacing: 1px; text-transform: uppercase; }
         
-        /* Botões */
         button {
             border: none; padding: 12px 20px; font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
             border-radius: 4px; cursor: pointer; color: white; transition: all 0.2s; margin: 5px;
         }
         button:active { transform: translateY(2px); }
-        .btn-primary { background-color: #e74c3c; border-bottom: 3px solid #c0392b; }
+        .btn-primary { background-color: #cc4135; border-bottom: 3px solid #a93226; }
         .btn-secondary { background-color: #34495e; border-bottom: 3px solid #2c3e50; }
-        .btn-info { background-color: #2980b9; border-bottom: 3px solid #2471a3; }
+        .btn-info { background-color: #4a8bba; border-bottom: 3px solid #33678e; }
+        .btn-green { background-color: #50a66d; border-bottom: 3px solid #3d8053; }
         .btn-dark { background-color: #2c3e50; border-bottom: 3px solid #1a252f; }
         .btn-group { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-bottom: 10px; }
 
-        /* Semáforo */
         #countdownOverlay {
             position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%); display: none;
             flex-direction: column; align-items: center; gap: 15px; background: rgba(0,0,0,0.85);
@@ -56,21 +52,19 @@
         }
         .lights-container { display: flex; gap: 15px; }
         .light { width: 40px; height: 40px; border-radius: 50%; background-color: #222; border: 2px solid #000; box-shadow: inset 0 0 10px #000; }
-        #light-red.active { background-color: #ff3838; box-shadow: 0 0 30px #ff3838, inset 0 0 10px #fff; }
-        #light-yellow.active { background-color: #f39c12; box-shadow: 0 0 30px #f39c12, inset 0 0 10px #fff; }
+        #light-red.active { background-color: #e74c3c; box-shadow: 0 0 30px #e74c3c, inset 0 0 10px #fff; }
+        #light-yellow.active { background-color: #f1c40f; box-shadow: 0 0 30px #f1c40f, inset 0 0 10px #fff; }
         #light-green.active { background-color: #2ecc71; box-shadow: 0 0 30px #2ecc71, inset 0 0 10px #fff; }
         #countdownText { font-size: 2rem; font-family: 'Share Tech Mono', monospace; }
 
-        /* Botão Freio */
         #btnBrake {
             position: absolute; bottom: 30px; right: 30px; width: 100px; height: 100px;
             border-radius: 50%; font-size: 1.1rem; display: none; pointer-events: auto;
-            background: linear-gradient(135deg, #ff4757, #c0392b); border: 4px solid #fff; color: white; font-weight: bold;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.6); outline: none;
+            background: linear-gradient(135deg, #cc4135, #a93226); border: 4px solid #fff; color: white; font-weight: bold;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.6); outline: none; opacity: 0.8;
         }
-        #btnBrake.active { background: #c0392b; transform: scale(0.92); box-shadow: 0 4px 10px rgba(0,0,0,0.6); }
+        #btnBrake.active { background: #a93226; transform: scale(0.92); box-shadow: 0 4px 10px rgba(0,0,0,0.6); opacity: 1; }
 
-        /* Placar */
         .scoreboard { text-align: left; margin: 15px 0 25px 0; background: #111; padding: 2px; border-radius: 4px; border: 1px solid #333; }
         .score-header { display: flex; font-size: 0.65rem; color: #7f8c8d; padding: 6px 10px; border-bottom: 1px solid #333; text-transform: uppercase; }
         .score-row { display: flex; padding: 10px; border-bottom: 1px solid #222; background: #1a1a1a; align-items: center; font-family: 'Share Tech Mono', monospace; font-size:0.85rem;}
@@ -78,7 +72,7 @@
         .score-row:last-child { border-bottom: none; }
         .col-pos { width: 15%; font-weight: bold; }
         .col-name { width: 50%; font-family: 'Montserrat', sans-serif; font-weight: bold; }
-        .col-time { width: 35%; text-align: right; color: #2ecc71; }
+        .col-time { width: 35%; text-align: right; color: #50a66d; }
         .pos-1 { color: #f1c40f; } .pos-2 { color: #bdc3c7; } .pos-3 { color: #cd7f32; } 
     </style>
 </head>
@@ -88,30 +82,35 @@
 
     <div id="ui">
         <div id="startScreen" class="modal">
-            <!-- Nova Arte Minimalista GT -->
             <svg width="200" height="60" viewBox="0 0 200 60" style="margin-bottom:15px; filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.6));">
-                <!-- Listra 1 (Larga - Azul) -->
-                <path d="M 20 60 L 50 0 L 75 0 L 45 60 Z" fill="#3498db" />
-                <!-- Listra 2 (Média - Amarela) -->
-                <path d="M 60 60 L 90 0 L 105 0 L 75 60 Z" fill="#f1c40f" />
-                <!-- Listra 3 (Fina - Vermelha) -->
-                <path d="M 90 60 L 120 0 L 128 0 L 98 60 Z" fill="#e74c3c" />
-                <!-- Texto GT -->
+                <path d="M 20 60 L 50 0 L 75 0 L 45 60 Z" fill="#4a8bba" />
+                <path d="M 60 60 L 90 0 L 105 0 L 75 60 Z" fill="#d4ad22" />
+                <path d="M 90 60 L 120 0 L 128 0 L 98 60 Z" fill="#cc4135" />
                 <text x="135" y="48" fill="#ecf0f1" font-family="'Montserrat', sans-serif" font-size="44" font-weight="900" font-style="italic">GT</text>
             </svg>
 
             <div class="gt-logo">Grão <strong>Turismo</strong></div>
             <div class="gt-subtitle">Extreme Racing Edition</div>
             
-            <!-- Seleção de Modo -->
             <div id="modeSelection">
+                <p style="font-size: 0.8rem; color: #bdc3c7; margin-bottom:10px;">Selecione o Modo</p>
                 <div class="btn-group">
                     <button class="btn-primary" onclick="btnAction(() => selectMode('RACE'))">1 vs Bots</button>
                     <button class="btn-info" onclick="btnAction(() => selectMode('TIME_TRIAL'))">Time Trial</button>
                 </div>
             </div>
 
-            <!-- Seleção de Pista -->
+            <div id="classSelection" style="display: none;">
+                <p style="font-size: 0.8rem; color: #bdc3c7; margin-bottom:10px;">Escolha a Categoria</p>
+                <div class="btn-group">
+                    <button class="btn-primary" onclick="btnAction(() => selectClass('GT'))">GT Turismo</button>
+                    <button class="btn-green" onclick="btnAction(() => selectClass('F1'))">Fórmula 1</button>
+                </div>
+                <div class="btn-group" style="margin-top:5px;">
+                    <button class="btn-dark" onclick="btnAction(returnToStart)">Voltar</button>
+                </div>
+            </div>
+
             <div id="trackSelection" style="display: none;">
                 <p id="modeDesc" style="color:#bdc3c7; font-size:0.8rem; margin-bottom:15px;"></p>
                 <div class="btn-group">
@@ -165,9 +164,9 @@
 
         <div id="hud" class="hud-panel">
             <div style="font-size: 0.75rem; margin-bottom: 6px; font-family: 'Montserrat', sans-serif;">
-                <span style="color:#ff4757">P1: <span id="pLaps">0</span></span>
-                <span id="cLapsWrapper"> | <span style="color:#3498db">CAP: <span id="cLaps">0</span></span></span> 
-                <span id="mLapsWrapper"> | <span style="color:#2ecc71">MAR: <span id="mLaps">0</span></span></span>
+                <span style="color:#cc4135">P1: <span id="pLaps">0</span></span>
+                <span id="cLapsWrapper"> | <span style="color:#4a8bba">CAP: <span id="cLaps">0</span></span></span> 
+                <span id="mLapsWrapper"> | <span style="color:#50a66d">MAR: <span id="mLaps">0</span></span></span>
             </div>
             T: <span id="timerDisplay">00:00.000</span>
         </div>
@@ -192,8 +191,7 @@
                 for (let i = 0; i < bufferSize; i++) output[i] = Math.random() * 2 - 1;
 
                 brakeNode = audioCtx.createBufferSource();
-                brakeNode.buffer = noiseBuffer;
-                brakeNode.loop = true;
+                brakeNode.buffer = noiseBuffer; brakeNode.loop = true;
                 let brakeFilter = audioCtx.createBiquadFilter();
                 brakeFilter.type = 'bandpass'; brakeFilter.frequency.value = 4000; brakeFilter.Q.value = 1.5;
                 brakeGain = audioCtx.createGain(); brakeGain.gain.value = 0;
@@ -257,85 +255,83 @@
         const scoreboardData = document.getElementById('scoreboardData'); const drawingHint = document.getElementById('drawingHint');
 
         let width, height, gameState = 'START', rawPoints = [], points = [], previewPoints = [], isDrawing = false;
-        let gameMode = 'RACE'; // 'RACE' ou 'TIME_TRIAL'
-        let trackRecords = []; // Guarda os recordes da pista
+        let gameMode = 'RACE'; 
+        let carClass = 'GT'; 
+        let trackRecords = []; 
         
-        // FÍSICA E BALANCEAMENTO
+        // FÍSICA E BALANCEAMENTO GLOBAL
         const SPACING = 5;             
-        const MAX_SPEED = 11.5;        
-        const ACCELERATION = 0.06;     
         const BRAKING_FORCE = 0.35;    
         const BASE_MIN_SPEED = 2.0;      
-        const DERAIL_THRESHOLD = 1.46;  
-        const SAFE_CORNER_SPEED = 4.5; 
         const MIN_DRAW_DIST = 10;
         const TOTAL_LAPS = 5;
 
+        // FÍSICA DINÂMICA
+        let currentMaxSpeed, currentAccel, currentThreshold, currentCornerSpeed;
+
         let startTime = 0, elapsedTime = 0, animationFrameId, finishers = [];
         let smokeParticles = [];
-        let clouds = [], birds = [];
+        let clouds = [], birds = [], barriers = [];
 
         const BIOMES = [
-            { name: 'FOREST', bg: '#27ae60', props: [ {c:'#1e8449', tip:'#58d68d', base:'#145a32'}, {c:'#196f3d', tip:'#52be80', base:'#0b5345'} ] },
-            { name: 'DESERT', bg: '#d68910', props: [ {c:'#e67e22', tip:'#f39c12', base:'#ba4a00'}, {c:'#229954', tip:'#a3e4d7', base:'#145a32'} ] },
-            { name: 'SNOW',   bg: '#d5dbdb', props: [ {c:'#ffffff', tip:'#fdfefe', base:'#bdc3c7'}, {c:'#aed6f1', tip:'#ebf5fb', base:'#5dade2'} ] }
+            { name: 'FOREST', bg: '#2b5e3b', props: [ {c:'#1e5c33', tip:'#3a8a55', base:'#144525'}, {c:'#1c5432', tip:'#367d4e', base:'#0f3b20'} ] },
+            { name: 'DESERT', bg: '#ad844b', props: [ {c:'#c27732', tip:'#d99757', base:'#8a4f1a'}, {c:'#3d7a54', tip:'#6eb087', base:'#254f34'} ] },
+            { name: 'SNOW',   bg: '#bac2c2', props: [ {c:'#e6e6e6', tip:'#ffffff', base:'#9ea6a6'}, {c:'#93b0c4', tip:'#d0e5f5', base:'#648196'} ] }
         ];
         let currentBiome = BIOMES[0], sceneryProps = [], grandstands = [];
 
-        // Controle de Menus Iniciais
-        if (localStorage.getItem('gtTrackData')) {
-            document.getElementById('btnLoadTrack').style.display = 'inline-block';
-        }
+        if (localStorage.getItem('gtTrackData')) document.getElementById('btnLoadTrack').style.display = 'inline-block';
 
         function selectMode(mode) {
             gameMode = mode;
             document.getElementById('modeSelection').style.display = 'none';
+            document.getElementById('classSelection').style.display = 'block';
+        }
+
+        function selectClass(cls) {
+            carClass = cls;
+            document.getElementById('classSelection').style.display = 'none';
             document.getElementById('trackSelection').style.display = 'block';
-            if(mode === 'RACE') document.getElementById('modeDesc').innerText = "Modo: 1 vs Bots (5 Voltas)";
-            if(mode === 'TIME_TRIAL') document.getElementById('modeDesc').innerText = "Modo: Time Trial Solo (Bata seus Recordes)";
+            let desc = gameMode === 'RACE' ? "1 vs Bots (5 Voltas)" : "Time Trial Solo";
+            desc += " | " + carClass;
+            document.getElementById('modeDesc').innerText = desc;
             
             if (localStorage.getItem('gtTrackData')) document.getElementById('btnLoadTrack').style.display = 'inline-block';
             else document.getElementById('btnLoadTrack').style.display = 'none';
         }
 
         function returnToStart() {
-            updateAudioEngine(0, false);
-            cancelAnimationFrame(animationFrameId);
-            hideAllScreens();
-            gameState = 'START';
+            updateAudioEngine(0, false); cancelAnimationFrame(animationFrameId);
+            hideAllScreens(); gameState = 'START';
             document.getElementById('modeSelection').style.display = 'block';
+            document.getElementById('classSelection').style.display = 'none';
             document.getElementById('trackSelection').style.display = 'none';
             document.getElementById('startScreen').style.display = 'block';
-            document.body.style.backgroundColor = '#1a1a1a';
-            ctx.clearRect(0, 0, width, height);
-            
+            document.body.style.backgroundColor = '#1a1a1a'; ctx.clearRect(0, 0, width, height);
             if (localStorage.getItem('gtTrackData')) document.getElementById('btnLoadTrack').style.display = 'inline-block';
         }
 
         function initSky() {
             clouds = []; birds = [];
-            for(let i=0; i<8; i++) clouds.push({ 
-                x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, 
-                size: Math.random() * 50 + 50, speed: Math.random() * 0.3 + 0.1, 
-                opacity: Math.random() * 0.3 + 0.3 
-            });
+            for(let i=0; i<8; i++) clouds.push({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, size: Math.random() * 50 + 50, speed: Math.random() * 0.3 + 0.1, opacity: Math.random() * 0.3 + 0.3 });
             for(let f=0; f<3; f++) {
                 let bx = Math.random() * window.innerWidth; let by = Math.random() * window.innerHeight;
                 let angle = (Math.random() - 0.5) * 0.5; let speed = Math.random() * 1.5 + 1.0;
-                for(let i=0; i<5; i++) {
-                    birds.push({ 
-                        x: bx + (Math.random()-0.5)*50, y: by + (Math.random()-0.5)*50, 
-                        speed: speed + (Math.random()-0.5)*0.2, angle: angle, flap: Math.random() * Math.PI * 2 
-                    });
-                }
+                for(let i=0; i<5; i++) birds.push({ x: bx + (Math.random()-0.5)*50, y: by + (Math.random()-0.5)*50, speed: speed + (Math.random()-0.5)*0.2, angle: angle, flap: Math.random() * Math.PI * 2 });
             }
         }
         initSky();
 
         function spawnSmoke(x, y) {
-            for(let i=0; i<2; i++) {
-                smokeParticles.push({ x: x + (Math.random()-0.5)*10, y: y + (Math.random()-0.5)*10, vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5, life: 1.0, size: Math.random()*4 + 4 });
-            }
+            for(let i=0; i<3; i++) smokeParticles.push({ x: x + (Math.random()-0.5)*10, y: y + (Math.random()-0.5)*10, vx: (Math.random()-0.5)*1.5, vy: (Math.random()-0.5)*1.5, life: 1.0, size: Math.random()*5 + 5 });
+        }
+
+        function drawTire(context, x, y, r) {
+            context.fillStyle = '#333'; 
+            context.beginPath(); context.arc(x, y, r, 0, Math.PI*2); context.fill();
+            context.strokeStyle = '#111'; context.lineWidth = 1; context.stroke();
+            context.fillStyle = '#000'; 
+            context.beginPath(); context.arc(x, y, r*0.4, 0, Math.PI*2); context.fill();
         }
 
         class Car {
@@ -361,13 +357,13 @@
                 if (this.isDerailed) {
                     this.blink = !this.blink;
                     spawnSmoke(this.x, this.y);
-                    this.speed *= 0.88; 
+                    this.speed *= 0.85; 
                     if (this.speed < BASE_MIN_SPEED) this.speed = BASE_MIN_SPEED;
                     if (now > this.derailTimer) { this.isDerailed = false; this.blink = false; } 
                 } else {
                     if (this.isBot) this.processAILogic(now);
-                    let myMaxSpeed = this.isBot ? this.botProfile.maxSpeed : MAX_SPEED; 
-                    let myAccel = this.isBot ? this.botProfile.accel : ACCELERATION;
+                    let myMaxSpeed = this.isBot ? currentMaxSpeed * this.botProfile.maxSpeedMult : currentMaxSpeed; 
+                    let myAccel = this.isBot ? currentAccel * this.botProfile.accelMult : currentAccel;
 
                     if (this.isBraking) {
                         this.speed -= BRAKING_FORCE;
@@ -414,8 +410,9 @@
                     if(predictedForce > maxForce) maxForce = predictedForce;
                 }
 
-                let botThreshold = DERAIL_THRESHOLD * this.botProfile.thresholdMult * this.botErrorFactor;
-                this.isBraking = (maxForce > botThreshold && this.speed > SAFE_CORNER_SPEED);
+                let aiBaseThreshold = currentThreshold * 1.30;
+                let botThreshold = aiBaseThreshold * this.botProfile.thresholdMult * this.botErrorFactor;
+                this.isBraking = (maxForce > botThreshold && this.speed > currentCornerSpeed);
             }
 
             updatePosition() {
@@ -441,11 +438,11 @@
                 let curveSharpness = Math.pow(Math.abs(angleDiff), 1.1) * 1.5;
                 let centrifugal = Math.abs(angleDiff) * this.speed * (1 + curveSharpness);
                 
-                let myThreshold = this.isBot ? DERAIL_THRESHOLD * 1.30 : DERAIL_THRESHOLD;
+                let myThreshold = this.isBot ? currentThreshold * 1.30 : currentThreshold;
 
-                if (centrifugal > myThreshold && this.speed > SAFE_CORNER_SPEED && !this.isDerailed) {
+                if (centrifugal > myThreshold && this.speed > currentCornerSpeed && !this.isDerailed) {
                     this.isDerailed = true;
-                    this.derailTimer = performance.now() + 1800; 
+                    this.derailTimer = performance.now() + 2800; 
                     if(this === playerCar) playCrash();
                 }
             }
@@ -455,24 +452,44 @@
                 ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
 
                 if(!this.finished) { ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowOffsetY = 4; ctx.shadowOffsetX = 2; ctx.shadowBlur = 4; }
-                ctx.fillStyle = this.colorBase; ctx.fillRect(-12, -7, 24, 14);
-                ctx.shadowColor = 'transparent'; 
                 
-                ctx.fillStyle = '#111'; 
-                ctx.fillRect(-9, -9, 5, 2); ctx.fillRect(5, -9, 5, 2); ctx.fillRect(-9, 7, 5, 2); ctx.fillRect(5, 7, 5, 2);  
-                ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-3, -5, 8, 10); 
-                ctx.fillStyle = '#f1c40f'; ctx.fillRect(10, -6, 2, 3); ctx.fillRect(10, 3, 2, 3); 
-                ctx.fillStyle = '#ff3838'; ctx.fillRect(-12, -6, 2, 3); ctx.fillRect(-12, 3, 2, 3); 
-                ctx.fillStyle = '#111'; ctx.fillRect(-14, -6, 3, 12); 
+                if (carClass === 'F1') {
+                    ctx.fillStyle = this.colorBase; 
+                    ctx.fillRect(-10, -3, 20, 6); 
+                    ctx.fillRect(10, -1.5, 8, 3); 
+                    
+                    ctx.shadowColor = 'transparent';
+                    ctx.fillStyle = '#222'; 
+                    ctx.fillRect(14, -6, 3, 12);  
+                    ctx.fillRect(-12, -5, 4, 10); 
+                    
+                    ctx.fillStyle = '#ecf0f1';
+                    ctx.fillRect(-2, -2, 4, 4);   
 
-                if(this.finished) { ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(-14, -9, 28, 18); }
+                    // Pneus estilo vazado para F1 (Open wheel)
+                    drawTire(ctx, 10, -7, 2.5);   
+                    drawTire(ctx, 10, 7, 2.5);    
+                    drawTire(ctx, -10, -8, 3); 
+                    drawTire(ctx, -10, 8, 3);  
+                    
+                } else {
+                    ctx.fillStyle = this.colorBase; ctx.fillRect(-12, -7, 24, 14);
+                    ctx.shadowColor = 'transparent'; 
+                    
+                    ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-3, -5, 8, 10); 
+                    ctx.fillStyle = '#f1c40f'; ctx.fillRect(10, -6, 2, 3); ctx.fillRect(10, 3, 2, 3); 
+                    ctx.fillStyle = '#ff3838'; ctx.fillRect(-12, -6, 2, 3); ctx.fillRect(-12, 3, 2, 3); 
+                    ctx.fillStyle = '#111'; ctx.fillRect(-14, -6, 3, 12); 
+                }
+
+                if(this.finished) { ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(-14, -10, 30, 20); }
                 ctx.restore();
             }
         }
 
-        let playerCar = new Car("Você", "#ff4757", false, 0);
-        let capBot = new Car("CAP-Bot", "#3498db", true, 14, { maxSpeed: 9.76, accel: 0.064, lookAheadMult: 3.5, thresholdMult: 0.98 });
-        let mariaBot = new Car("MARIA-Bot", "#2ecc71", true, -14, { maxSpeed: 9.44, accel: 0.056, lookAheadMult: 4.2, thresholdMult: 0.90 });
+        let playerCar = new Car("Você", "#cc4135", false, 0);
+        let capBot = new Car("CAP-Bot", "#4a8bba", true, 14, { maxSpeedMult: 0.85, accelMult: 1.05, lookAheadMult: 2.2, thresholdMult: 0.96 });
+        let mariaBot = new Car("MARIA-Bot", "#50a66d", true, -14, { maxSpeedMult: 0.82, accelMult: 0.95, lookAheadMult: 2.8, thresholdMult: 0.88 });
         let allCars = [];
 
         function formatTime(ms) {
@@ -503,8 +520,8 @@
 
         function startDrawingPhase() {
             hideAllScreens(); gameState = 'DRAWING';
-            rawPoints = []; points = []; previewPoints = []; sceneryProps = []; grandstands = []; smokeParticles = [];
-            trackRecords = []; // Nova pista limpa os recordes passados da memoria
+            rawPoints = []; points = []; previewPoints = []; sceneryProps = []; grandstands = []; smokeParticles = []; barriers = [];
+            trackRecords = []; 
             document.body.style.backgroundColor = '#1a1a1a'; ctx.clearRect(0, 0, width, height);
             
             drawingHint.style.opacity = 1;
@@ -549,7 +566,7 @@
                     for(let k=0; k<180; k++){
                         crowd.push({
                             ox: (Math.random() - 0.5) * 160, oy: (Math.random() - 0.5) * 22,
-                            c: ['#e74c3c','#3498db','#f1c40f','#ecf0f1', '#9b59b6', '#2ecc71'][Math.floor(Math.random()*6)],
+                            c: ['#cc4135','#4a8bba','#d4ad22','#ecf0f1', '#9b59b6', '#50a66d'][Math.floor(Math.random()*6)],
                             phase: Math.random() * Math.PI * 2
                         });
                     }
@@ -557,25 +574,53 @@
                     i += jump * 2; 
                 }
             }
+
+            barriers = [];
+            for (let i = 0; i < points.length; i++) {
+                let p0 = points[(i - 5 + points.length) % points.length];
+                let p1 = points[i];
+                let p2 = points[(i + 5) % points.length];
+
+                let a1 = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+                let a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                let angleDiff = a2 - a1;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+
+                let sharpness = Math.abs(angleDiff);
+                if (sharpness > 0.08) {
+                    let type = sharpness > 0.18 ? 'TIRES' : 'GUARDRAIL';
+                    let side = angleDiff > 0 ? -1 : 1; 
+                    let tangent = Math.atan2(p2.y - p0.y, p2.x - p0.x);
+                    let normal = tangent + (Math.PI/2) * side;
+                    let dist = 38; 
+                    
+                    let bx = p1.x + Math.cos(normal) * dist;
+                    let by = p1.y + Math.sin(normal) * dist;
+                    
+                    barriers.push({ x: bx, y: by, type: type, angle: tangent, index: i });
+                }
+            }
         }
 
-        function drawScenery() {
+        function drawSceneryBase() {
             ctx.fillStyle = currentBiome.bg; ctx.fillRect(0, 0, width, height);
+        }
 
-            // Arvores
+        function drawSceneryProps() {
             for (let prop of sceneryProps) {
                 ctx.save(); ctx.translate(prop.x + prop.size * 0.7, prop.y + prop.size * 0.7); ctx.rotate(Math.PI / 4); ctx.scale(1.5, 0.6);
                 ctx.beginPath(); ctx.arc(0, 0, prop.size, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill(); ctx.restore();
                 
                 let grad = ctx.createRadialGradient(prop.x - prop.size*0.25, prop.y - prop.size*0.25, 0, prop.x, prop.y, prop.size);
                 grad.addColorStop(0, prop.style.tip); grad.addColorStop(0.35, prop.style.c); grad.addColorStop(1, prop.style.base);
-                ctx.beginPath(); ctx.arc(prop.x, prop.y, prop.size, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill();
+                ctx.beginPath(); ctx.arc(prop.x, prop.y, prop.size, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill(); 
             }
 
             let now = performance.now();
             for (let stand of grandstands) {
                 ctx.save(); ctx.translate(stand.x, stand.y); ctx.rotate(stand.angle);
-                ctx.fillStyle = '#555'; ctx.fillRect(-85, -16, 170, 32); ctx.fillStyle = '#333'; ctx.fillRect(-83, -13, 166, 26);
+                ctx.fillStyle = '#444'; ctx.fillRect(-85, -16, 170, 32); ctx.fillStyle = '#222'; ctx.fillRect(-83, -13, 166, 26);
                 for(let p of stand.crowd) {
                     let bounce = Math.abs(Math.sin(now/150 + p.phase)) * 4.5;
                     ctx.fillStyle = p.c; ctx.beginPath(); ctx.arc(p.ox, p.oy - bounce, 2, 0, Math.PI*2); ctx.fill();
@@ -733,21 +778,52 @@
             else { let last = rawPoints[rawPoints.length - 1]; if (Math.hypot(x - last.x, y - last.y) > MIN_DRAW_DIST) rawPoints.push({x, y}); }
         }
 
-        canvas.addEventListener('mousedown', (e) => { if(gameState==='START') initAudio(); if (gameState === 'DRAWING') { isDrawing = true; addRawPoint(e.clientX, e.clientY); }});
-        canvas.addEventListener('mousemove', (e) => { if (gameState === 'DRAWING' && isDrawing) addRawPoint(e.clientX, e.clientY); });
-        canvas.addEventListener('mouseup', () => { if (gameState === 'DRAWING' && isDrawing) { isDrawing = false; finishDrawingPhase(); }});
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); if(gameState==='START') initAudio(); if (gameState === 'DRAWING') { isDrawing = true; addRawPoint(e.touches[0].clientX, e.touches[0].clientY); }}, {passive: false});
-        canvas.addEventListener('touchmove', (e) => { e.preventDefault(); if (gameState === 'DRAWING' && isDrawing) addRawPoint(e.touches[0].clientX, e.touches[0].clientY); }, {passive: false});
-        canvas.addEventListener('touchend', (e) => { e.preventDefault(); if (gameState === 'DRAWING' && isDrawing) { isDrawing = false; finishDrawingPhase(); }}, {passive: false});
+        function pressBrake(e) { 
+            if(e && e.preventDefault && e.target !== btnLoadTrack && !e.target.closest('button')) e.preventDefault(); 
+            playerCar.isBraking = true; btnBrake.classList.add('active'); 
+        }
+        function releaseBrake(e) { 
+            if(e && e.preventDefault) e.preventDefault(); 
+            playerCar.isBraking = false; btnBrake.classList.remove('active'); 
+        }
 
-        function pressBrake(e) { e.preventDefault(); playerCar.isBraking = true; btnBrake.classList.add('active'); }
-        function releaseBrake(e) { e.preventDefault(); playerCar.isBraking = false; btnBrake.classList.remove('active'); }
+        canvas.addEventListener('mousedown', (e) => { 
+            if(gameState==='START') initAudio(); 
+            if (gameState === 'DRAWING') { isDrawing = true; addRawPoint(e.clientX, e.clientY); }
+            if (gameState === 'RACING') pressBrake(e);
+        });
+        canvas.addEventListener('mousemove', (e) => { if (gameState === 'DRAWING' && isDrawing) addRawPoint(e.clientX, e.clientY); });
+        canvas.addEventListener('mouseup', (e) => { 
+            if (gameState === 'DRAWING' && isDrawing) { isDrawing = false; finishDrawingPhase(); }
+            if (gameState === 'RACING') releaseBrake(e);
+        });
+        canvas.addEventListener('touchstart', (e) => { 
+            if(e.target === canvas) e.preventDefault(); 
+            if(gameState==='START') initAudio(); 
+            if (gameState === 'DRAWING') { isDrawing = true; addRawPoint(e.touches[0].clientX, e.touches[0].clientY); }
+            if (gameState === 'RACING') pressBrake(e);
+        }, {passive: false});
+        canvas.addEventListener('touchmove', (e) => { 
+            if(e.target === canvas) e.preventDefault(); 
+            if (gameState === 'DRAWING' && isDrawing) addRawPoint(e.touches[0].clientX, e.touches[0].clientY); 
+        }, {passive: false});
+        canvas.addEventListener('touchend', (e) => { 
+            if(e.target === canvas) e.preventDefault(); 
+            if (gameState === 'DRAWING' && isDrawing) { isDrawing = false; finishDrawingPhase(); }
+            if (gameState === 'RACING') releaseBrake(e);
+        }, {passive: false});
+
         btnBrake.addEventListener('mousedown', pressBrake); btnBrake.addEventListener('touchstart', pressBrake, {passive: false});
         btnBrake.addEventListener('mouseup', releaseBrake); btnBrake.addEventListener('mouseleave', releaseBrake); btnBrake.addEventListener('touchend', releaseBrake);
 
         function startCountdown() {
             gameState = 'COUNTDOWN';
             finishers = []; smokeParticles = [];
+            
+            currentMaxSpeed = carClass === 'F1' ? 14.0 : 11.5;
+            currentAccel = carClass === 'F1' ? 0.08 : 0.06;
+            currentThreshold = carClass === 'F1' ? 2.0 : 1.60;
+            currentCornerSpeed = carClass === 'F1' ? 5.5 : 4.5;
             
             if (gameMode === 'TIME_TRIAL') {
                 allCars = [playerCar];
@@ -807,10 +883,9 @@
                                  <div class="col-name">${car.name}</div><div class="col-time">${formatTime(car.finishTime)}</div></div>`;
                     });
                 } else {
-                    // Lógica Time Trial
                     trackRecords.push(playerCar.finishTime);
                     trackRecords.sort((a, b) => a - b);
-                    trackRecords = trackRecords.slice(0, 5); // Mantem os 5 melhores
+                    trackRecords = trackRecords.slice(0, 5); 
                     
                     html += `<div class="score-header"><div class="col-pos">TOP</div><div class="col-name">RECORDES (TIME TRIAL)</div><div class="col-time">TEMPO</div></div>`;
                     let classes = ['pos-1', 'pos-2', 'pos-3', '', ''];
@@ -834,10 +909,32 @@
             
             ctx.strokeStyle = '#2c3e50'; ctx.lineWidth = 66; ctx.stroke(); 
             ctx.strokeStyle = '#bdc3c7'; ctx.lineWidth = 56; ctx.stroke(); 
-            ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 56; ctx.setLineDash([15, 15]); ctx.stroke(); ctx.setLineDash([]);  
+            ctx.strokeStyle = '#cc4135'; ctx.lineWidth = 56; ctx.setLineDash([15, 15]); ctx.stroke(); ctx.setLineDash([]);  
             ctx.strokeStyle = '#34495e'; ctx.lineWidth = 50; ctx.stroke(); 
             
             ctx.strokeStyle = 'rgba(255,255,255,0.2)'; ctx.lineWidth = 2; ctx.setLineDash([10, 15]); ctx.stroke(); ctx.setLineDash([]); 
+
+            ctx.lineWidth = 3; ctx.strokeStyle = '#95a5a6'; ctx.beginPath(); let drawingGR = false;
+            for (let i=0; i<barriers.length; i++) {
+                let b = barriers[i];
+                if (b.type === 'GUARDRAIL') {
+                    if (!drawingGR || (i > 0 && b.index !== barriers[i-1].index + 1)) { ctx.moveTo(b.x, b.y); drawingGR = true; } 
+                    else { ctx.lineTo(b.x, b.y); }
+                } else drawingGR = false;
+            }
+            ctx.stroke();
+
+            for (let i=0; i<barriers.length; i++) {
+                let b = barriers[i];
+                if (b.type === 'TIRES') {
+                    ctx.fillStyle = '#333'; // Cinza escuro
+                    ctx.beginPath(); ctx.arc(b.x, b.y, 4.5, 0, Math.PI*2); ctx.fill();
+                    ctx.strokeStyle = '#111'; ctx.lineWidth = 1; ctx.stroke();
+                    
+                    ctx.fillStyle = '#000'; // Furo central
+                    ctx.beginPath(); ctx.arc(b.x, b.y, 2, 0, Math.PI*2); ctx.fill();
+                }
+            }
 
             ctx.save(); ctx.translate(targetPoints[0].x, targetPoints[0].y);
             let ang = Math.atan2(targetPoints[1].y - targetPoints[0].y, targetPoints[1].x - targetPoints[0].x);
@@ -859,11 +956,12 @@
         function loop() {
             if (gameState !== 'RACING') return; update();
             ctx.clearRect(0, 0, width, height); 
-            drawScenery(); 
-            drawSky(); 
+            drawSceneryBase(); 
+            drawSceneryProps();
             drawTrack(points); 
             allCars.forEach(car => car.draw());
             drawAndUpdateSmoke(); 
+            drawSky();
             animationFrameId = requestAnimationFrame(loop);
         }
         
@@ -875,8 +973,20 @@
                     for (let i = 1; i < rawPoints.length; i++) ctx.lineTo(rawPoints[i].x, rawPoints[i].y);
                     ctx.strokeStyle = '#34495e'; ctx.lineWidth = 40; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
                 }
-            } else if (gameState === 'CONFIRM') { ctx.clearRect(0, 0, width, height); drawTrack(previewPoints); } 
-              else if (gameState === 'COUNTDOWN') { ctx.clearRect(0, 0, width, height); drawScenery(); drawSky(); drawTrack(points); allCars.forEach(car => car.draw()); }
+            } else if (gameState === 'CONFIRM') { 
+                ctx.clearRect(0, 0, width, height); 
+                drawSceneryBase(); 
+                drawSceneryProps();
+                drawTrack(previewPoints); 
+            } 
+            else if (gameState === 'COUNTDOWN') { 
+                ctx.clearRect(0, 0, width, height); 
+                drawSceneryBase(); 
+                drawSceneryProps();
+                drawTrack(points); 
+                allCars.forEach(car => car.draw()); 
+                drawSky();
+            }
             requestAnimationFrame(renderInterface);
         }
         renderInterface();

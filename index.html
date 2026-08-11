@@ -57,13 +57,15 @@
         #light-green.active { background-color: #2ecc71; box-shadow: 0 0 30px #2ecc71, inset 0 0 10px #fff; }
         #countdownText { font-size: 2rem; font-family: 'Share Tech Mono', monospace; }
 
-        #btnBrake {
+        /* Botão Acelerador Sem Texto */
+        #btnAccelerate {
             position: absolute; bottom: 30px; right: 30px; width: 100px; height: 100px;
-            border-radius: 50%; font-size: 1.1rem; display: none; pointer-events: auto;
-            background: linear-gradient(135deg, #cc4135, #a93226); border: 4px solid #fff; color: white; font-weight: bold;
+            border-radius: 50%; display: none; pointer-events: auto;
+            background: linear-gradient(135deg, #2ecc71, #27ae60); border: 4px solid #fff;
             box-shadow: 0 8px 20px rgba(0,0,0,0.6); outline: none; opacity: 0.8;
+            padding: 0; margin: 0;
         }
-        #btnBrake.active { background: #a93226; transform: scale(0.92); box-shadow: 0 4px 10px rgba(0,0,0,0.6); opacity: 1; }
+        #btnAccelerate.active { background: #27ae60; transform: scale(0.92); box-shadow: 0 4px 10px rgba(0,0,0,0.6); opacity: 1; }
 
         .scoreboard { text-align: left; margin: 15px 0 25px 0; background: #111; padding: 2px; border-radius: 4px; border: 1px solid #333; }
         .score-header { display: flex; font-size: 0.65rem; color: #7f8c8d; padding: 6px 10px; border-bottom: 1px solid #333; text-transform: uppercase; }
@@ -92,8 +94,9 @@
             <div class="gt-logo">Grão <strong>Turismo</strong></div>
             <div class="gt-subtitle">Extreme Racing Edition</div>
             
+            <p style="font-size: 0.8rem; color: #bdc3c7; margin-bottom:10px;">Toque e segure para acelerar. Solte para desacelerar nas curvas.</p>
+
             <div id="modeSelection">
-                <p style="font-size: 0.8rem; color: #bdc3c7; margin-bottom:10px;">Selecione o Modo</p>
                 <div class="btn-group">
                     <button class="btn-primary" onclick="btnAction(() => selectMode('RACE'))">1 vs Bots</button>
                     <button class="btn-info" onclick="btnAction(() => selectMode('TIME_TRIAL'))">Time Trial</button>
@@ -171,7 +174,7 @@
             T: <span id="timerDisplay">00:00.000</span>
         </div>
 
-        <button id="btnBrake">FREIO</button>
+        <button id="btnAccelerate"></button>
     </div>
 
     <script>
@@ -239,7 +242,7 @@
             try {
                 if(!audioCtx) return;
                 if(gameState === 'RACING' || gameState === 'COUNTDOWN') {
-                    if(isBraking && speed > 3) brakeGain.gain.setTargetAtTime(0.15, audioCtx.currentTime, 0.05);
+                    if(isBraking && speed > 5.0) brakeGain.gain.setTargetAtTime(0.15, audioCtx.currentTime, 0.05);
                     else brakeGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
                 } else brakeGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.1);
             } catch(e) {}
@@ -250,7 +253,7 @@
         const canvas = document.getElementById('gameCanvas'); const ctx = canvas.getContext('2d');
         const startScreen = document.getElementById('startScreen'); const confirmScreen = document.getElementById('confirmScreen');
         const endScreen = document.getElementById('endScreen'); const countdownOverlay = document.getElementById('countdownOverlay');
-        const hud = document.getElementById('hud'); const btnBrake = document.getElementById('btnBrake');
+        const hud = document.getElementById('hud'); const btnAccelerate = document.getElementById('btnAccelerate');
         const btnLoadTrack = document.getElementById('btnLoadTrack'); const timerDisplay = document.getElementById('timerDisplay');
         const scoreboardData = document.getElementById('scoreboardData'); const drawingHint = document.getElementById('drawingHint');
 
@@ -261,8 +264,8 @@
         
         // FÍSICA E BALANCEAMENTO GLOBAL
         const SPACING = 5;             
-        const BRAKING_FORCE = 0.35;    
-        const BASE_MIN_SPEED = 2.0;      
+        const BRAKING_FORCE = 0.35; 
+        const BASE_MIN_SPEED = 2.76;      
         const MIN_DRAW_DIST = 10;
         const TOTAL_LAPS = 5;
 
@@ -342,8 +345,10 @@
 
             reset() {
                 this.t = 0; this.speed = 0; this.laps = 0; this.x = 0; this.y = 0; this.angle = 0;
-                this.isBraking = false; this.isDerailed = false; this.derailTimer = 0; this.blink = false;
+                this.isAccelerating = false; this.isDerailed = false; this.derailTimer = 0; this.blink = false;
                 this.finished = false; this.finishTime = 0; this.botErrorFactor = 1.0; this.lastBotUpdate = 0;
+                this.inDangerZone = false; 
+                this.willErrorThisCurve = false; 
                 if(points.length > 0) this.updatePosition();
             }
 
@@ -365,12 +370,12 @@
                     let myMaxSpeed = this.isBot ? currentMaxSpeed * this.botProfile.maxSpeedMult : currentMaxSpeed; 
                     let myAccel = this.isBot ? currentAccel * this.botProfile.accelMult : currentAccel;
 
-                    if (this.isBraking) {
-                        this.speed -= BRAKING_FORCE;
-                        if (this.speed < BASE_MIN_SPEED) this.speed = BASE_MIN_SPEED;
-                    } else {
+                    if (this.isAccelerating) {
                         this.speed += myAccel;
                         if (this.speed > myMaxSpeed) this.speed = myMaxSpeed;
+                    } else {
+                        this.speed -= BRAKING_FORCE;
+                        if (this.speed < BASE_MIN_SPEED) this.speed = BASE_MIN_SPEED;
                     }
                 }
 
@@ -387,12 +392,6 @@
             }
 
             processAILogic(now) {
-                if (now - this.lastBotUpdate > 300) {
-                    if (Math.random() < 0.30) this.botErrorFactor = 1.5; 
-                    else this.botErrorFactor = 0.85; 
-                    this.lastBotUpdate = now;
-                }
-                
                 let idx = Math.floor(this.t);
                 let lookAheadFrames = Math.floor(this.speed * this.botProfile.lookAheadMult); 
                 let maxForce = 0;
@@ -411,8 +410,24 @@
                 }
 
                 let aiBaseThreshold = currentThreshold * 1.30;
-                let botThreshold = aiBaseThreshold * this.botProfile.thresholdMult * this.botErrorFactor;
-                this.isBraking = (maxForce > botThreshold && this.speed > currentCornerSpeed);
+                let botThreshold = aiBaseThreshold * this.botProfile.thresholdMult;
+                let dangerous = (maxForce > botThreshold && this.speed > currentCornerSpeed);
+
+                if (dangerous) {
+                    if (!this.inDangerZone) {
+                        this.inDangerZone = true;
+                        this.willErrorThisCurve = Math.random() < 0.40; 
+                    }
+                } else {
+                    this.inDangerZone = false;
+                    this.willErrorThisCurve = false;
+                }
+
+                if (this.inDangerZone && this.willErrorThisCurve) {
+                    this.isAccelerating = true; 
+                } else {
+                    this.isAccelerating = !dangerous;
+                }
             }
 
             updatePosition() {
@@ -466,7 +481,6 @@
                     ctx.fillStyle = '#ecf0f1';
                     ctx.fillRect(-2, -2, 4, 4);   
 
-                    // Pneus estilo vazado para F1 (Open wheel)
                     drawTire(ctx, 10, -7, 2.5);   
                     drawTire(ctx, 10, 7, 2.5);    
                     drawTire(ctx, -10, -8, 3); 
@@ -488,8 +502,8 @@
         }
 
         let playerCar = new Car("Você", "#cc4135", false, 0);
-        let capBot = new Car("CAP-Bot", "#4a8bba", true, 14, { maxSpeedMult: 0.85, accelMult: 1.05, lookAheadMult: 2.2, thresholdMult: 0.96 });
-        let mariaBot = new Car("MARIA-Bot", "#50a66d", true, -14, { maxSpeedMult: 0.82, accelMult: 0.95, lookAheadMult: 2.8, thresholdMult: 0.88 });
+        let capBot = new Car("CAP-Bot", "#4a8bba", true, 14, { maxSpeedMult: 0.48, accelMult: 0.85, lookAheadMult: 2.2, thresholdMult: 0.96 });
+        let mariaBot = new Car("MARIA-Bot", "#50a66d", true, -14, { maxSpeedMult: 0.46, accelMult: 0.77, lookAheadMult: 2.8, thresholdMult: 0.88 });
         let allCars = [];
 
         function formatTime(ms) {
@@ -515,7 +529,7 @@
         function hideAllScreens() {
             startScreen.style.display = 'none'; confirmScreen.style.display = 'none';
             endScreen.style.display = 'none'; countdownOverlay.style.display = 'none';
-            hud.style.display = 'none'; btnBrake.style.display = 'none'; drawingHint.style.opacity = 0;
+            hud.style.display = 'none'; btnAccelerate.style.display = 'none'; drawingHint.style.opacity = 0;
         }
 
         function startDrawingPhase() {
@@ -778,30 +792,31 @@
             else { let last = rawPoints[rawPoints.length - 1]; if (Math.hypot(x - last.x, y - last.y) > MIN_DRAW_DIST) rawPoints.push({x, y}); }
         }
 
-        function pressBrake(e) { 
+        // CONTROLES DE ACELERADOR
+        function pressAccelerate(e) { 
             if(e && e.preventDefault && e.target !== btnLoadTrack && !e.target.closest('button')) e.preventDefault(); 
-            playerCar.isBraking = true; btnBrake.classList.add('active'); 
+            playerCar.isAccelerating = true; btnAccelerate.classList.add('active'); 
         }
-        function releaseBrake(e) { 
+        function releaseAccelerate(e) { 
             if(e && e.preventDefault) e.preventDefault(); 
-            playerCar.isBraking = false; btnBrake.classList.remove('active'); 
+            playerCar.isAccelerating = false; btnAccelerate.classList.remove('active'); 
         }
 
         canvas.addEventListener('mousedown', (e) => { 
             if(gameState==='START') initAudio(); 
             if (gameState === 'DRAWING') { isDrawing = true; addRawPoint(e.clientX, e.clientY); }
-            if (gameState === 'RACING') pressBrake(e);
+            if (gameState === 'RACING') pressAccelerate(e);
         });
         canvas.addEventListener('mousemove', (e) => { if (gameState === 'DRAWING' && isDrawing) addRawPoint(e.clientX, e.clientY); });
         canvas.addEventListener('mouseup', (e) => { 
             if (gameState === 'DRAWING' && isDrawing) { isDrawing = false; finishDrawingPhase(); }
-            if (gameState === 'RACING') releaseBrake(e);
+            if (gameState === 'RACING') releaseAccelerate(e);
         });
         canvas.addEventListener('touchstart', (e) => { 
             if(e.target === canvas) e.preventDefault(); 
             if(gameState==='START') initAudio(); 
             if (gameState === 'DRAWING') { isDrawing = true; addRawPoint(e.touches[0].clientX, e.touches[0].clientY); }
-            if (gameState === 'RACING') pressBrake(e);
+            if (gameState === 'RACING') pressAccelerate(e);
         }, {passive: false});
         canvas.addEventListener('touchmove', (e) => { 
             if(e.target === canvas) e.preventDefault(); 
@@ -810,11 +825,11 @@
         canvas.addEventListener('touchend', (e) => { 
             if(e.target === canvas) e.preventDefault(); 
             if (gameState === 'DRAWING' && isDrawing) { isDrawing = false; finishDrawingPhase(); }
-            if (gameState === 'RACING') releaseBrake(e);
+            if (gameState === 'RACING') releaseAccelerate(e);
         }, {passive: false});
 
-        btnBrake.addEventListener('mousedown', pressBrake); btnBrake.addEventListener('touchstart', pressBrake, {passive: false});
-        btnBrake.addEventListener('mouseup', releaseBrake); btnBrake.addEventListener('mouseleave', releaseBrake); btnBrake.addEventListener('touchend', releaseBrake);
+        btnAccelerate.addEventListener('mousedown', pressAccelerate); btnAccelerate.addEventListener('touchstart', pressAccelerate, {passive: false});
+        btnAccelerate.addEventListener('mouseup', releaseAccelerate); btnAccelerate.addEventListener('mouseleave', releaseAccelerate); btnAccelerate.addEventListener('touchend', releaseAccelerate);
 
         function startCountdown() {
             gameState = 'COUNTDOWN';
@@ -840,7 +855,7 @@
             allCars.forEach(car => car.reset());
             updateLapDisplays();
             countdownOverlay.style.display = 'flex';
-            btnBrake.style.display = 'block';
+            btnAccelerate.style.display = 'block';
             runCountdown();
         }
 
@@ -869,7 +884,7 @@
                 gameState = 'END';
                 updateAudioEngine(0, false);
                 cancelAnimationFrame(animationFrameId);
-                hud.style.display = 'none'; btnBrake.style.display = 'none';
+                hud.style.display = 'none'; btnAccelerate.style.display = 'none';
                 
                 if(finishers[0] === playerCar) playVictory(); 
                 
@@ -927,11 +942,10 @@
             for (let i=0; i<barriers.length; i++) {
                 let b = barriers[i];
                 if (b.type === 'TIRES') {
-                    ctx.fillStyle = '#333'; // Cinza escuro
+                    ctx.fillStyle = '#333'; 
                     ctx.beginPath(); ctx.arc(b.x, b.y, 4.5, 0, Math.PI*2); ctx.fill();
                     ctx.strokeStyle = '#111'; ctx.lineWidth = 1; ctx.stroke();
-                    
-                    ctx.fillStyle = '#000'; // Furo central
+                    ctx.fillStyle = '#000'; 
                     ctx.beginPath(); ctx.arc(b.x, b.y, 2, 0, Math.PI*2); ctx.fill();
                 }
             }
@@ -950,7 +964,7 @@
                 elapsedTime = now - startTime; timerDisplay.innerText = formatTime(elapsedTime);
             }
             allCars.forEach(car => car.updateLogic(now));
-            updateAudioEngine(playerCar.speed, playerCar.isBraking);
+            updateAudioEngine(playerCar.speed, !playerCar.isAccelerating);
         }
 
         function loop() {

@@ -66,6 +66,15 @@
         }
         #btnAccelerate.active { background: #27ae60; transform: scale(0.92); box-shadow: 0 4px 10px rgba(0,0,0,0.6); opacity: 1; }
 
+        #btnPause {
+            position: absolute; bottom: 50px; right: 150px; width: 60px; height: 60px;
+            border-radius: 50%; display: none; pointer-events: auto;
+            background: linear-gradient(135deg, #f39c12, #d35400); border: 3px solid #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.6); outline: none; opacity: 0.9;
+            padding: 0; margin: 0; font-size: 1.5rem; color: #fff; line-height: 54px; text-align: center;
+        }
+        #btnPause:active { transform: scale(0.92); }
+
         .scoreboard { text-align: left; margin: 15px 0 25px 0; background: #111; padding: 2px; border-radius: 4px; border: 1px solid #333; }
         .score-header { display: flex; font-size: 0.65rem; color: #7f8c8d; padding: 6px 10px; border-bottom: 1px solid #333; text-transform: uppercase; }
         .score-row { display: flex; padding: 10px; border-bottom: 1px solid #222; background: #1a1a1a; align-items: center; font-family: 'Share Tech Mono', monospace; font-size:0.85rem;}
@@ -174,6 +183,7 @@
         </div>
 
         <button id="btnAccelerate"></button>
+        <button id="btnPause">⏸</button>
     </div>
 
     <script>
@@ -212,13 +222,26 @@
             } catch(e) {}
         }
 
-        function playCrash() {
+        function playDrift() {
             try {
                 if(!audioCtx) return;
-                let noise = audioCtx.createBufferSource(); noise.buffer = noiseBuffer;
-                let filter = audioCtx.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 1200;
-                let gain = audioCtx.createGain(); gain.gain.setValueAtTime(0.5, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
-                noise.connect(filter); filter.connect(gain); gain.connect(audioCtx.destination); noise.start();
+                let noise = audioCtx.createBufferSource();
+                noise.buffer = noiseBuffer;
+                
+                let filter = audioCtx.createBiquadFilter();
+                filter.type = 'bandpass';
+                filter.frequency.value = 1400; 
+                filter.Q.value = 6.0; 
+
+                let gain = audioCtx.createGain();
+                gain.gain.setValueAtTime(0, audioCtx.currentTime);
+                gain.gain.linearRampToValueAtTime(1.2, audioCtx.currentTime + 0.1);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(audioCtx.destination);
+                noise.start();
             } catch(e) {}
         }
 
@@ -253,6 +276,7 @@
         const startScreen = document.getElementById('startScreen'); const confirmScreen = document.getElementById('confirmScreen');
         const endScreen = document.getElementById('endScreen'); const countdownOverlay = document.getElementById('countdownOverlay');
         const hud = document.getElementById('hud'); const btnAccelerate = document.getElementById('btnAccelerate');
+        const btnPause = document.getElementById('btnPause');
         const btnLoadTrack = document.getElementById('btnLoadTrack'); const timerDisplay = document.getElementById('timerDisplay');
         const scoreboardData = document.getElementById('scoreboardData'); const drawingHint = document.getElementById('drawingHint');
 
@@ -260,17 +284,19 @@
         let gameMode = 'RACE'; 
         let carClass = 'GT'; 
         let trackRecords = []; 
+        let isPaused = false;
         
-        // FÍSICA GLOBAL
+        // FÍSICA E BALANCEAMENTO
         const SPACING = 5;             
         const BRAKING_FORCE = 0.35; 
         const BASE_MIN_SPEED = 2.76;      
         const MIN_DRAW_DIST = 10;
-        const TOTAL_LAPS = 5;
+        const TOTAL_LAPS = 6; 
 
+        // FÍSICA DINÂMICA
         let currentMaxSpeed, currentAccel, currentThreshold, currentCornerSpeed;
 
-        let startTime = 0, elapsedTime = 0, animationFrameId, finishers = [];
+        let startTime = 0, elapsedTime = 0, pauseStartTime = 0, totalPausedTime = 0, animationFrameId, finishers = [];
         let smokeParticles = [];
         let sparkParticles = []; 
         let clouds = [], birds = [], barriers = [], sandTraps = [], lakes = [], rocks = [], skidPaths = [], scatteredCrowd = [];
@@ -278,10 +304,11 @@
         let bgCanvas = document.createElement('canvas');
         let bgCtx = bgCanvas.getContext('2d');
 
+        // Cores Menos Saturadas e Naturais
         const BIOMES = [
-            { name: 'FOREST', bg: '#2b5e3b', vars: ['#224f30', '#326e45', '#1f452a', '#1e5c33'], props: [ {c:'#1e5c33', tip:'#3a8a55', base:'#144525'}, {c:'#1c5432', tip:'#367d4e', base:'#0f3b20'} ] },
-            { name: 'DESERT', bg: '#ad844b', vars: ['#9c7540', '#bd9255', '#8a6534', '#c99f63'], props: [ {c:'#c27732', tip:'#d99757', base:'#8a4f1a'}, {c:'#3d7a54', tip:'#6eb087', base:'#254f34'} ] },
-            { name: 'SNOW',   bg: '#bac2c2', vars: ['#aab4b4', '#c8cece', '#95a1a1', '#d2dbdb'], props: [ {c:'#e6e6e6', tip:'#ffffff', base:'#9ea6a6'}, {c:'#93b0c4', tip:'#d0e5f5', base:'#648196'} ] }
+            { name: 'FOREST', bg: '#415d47', vars: ['#39523e', '#48664e', '#334a37', '#3c5741'], props: [ {c:'#2e663c', tip:'#458f57', base:'#1b4225'}, {c:'#295c35', tip:'#3d824d', base:'#173d20'} ] },
+            { name: 'DESERT', bg: '#ab8d66', vars: ['#9c805c', '#b8986e', '#8a7151', '#c7a477'], props: [ {c:'#c27732', tip:'#d99757', base:'#8a4f1a'}, {c:'#3d7a54', tip:'#6eb087', base:'#254f34'} ] },
+            { name: 'SNOW',   bg: '#b9c2c2', vars: ['#aab4b4', '#c8cece', '#95a1a1', '#d2dbdb'], props: [ {c:'#e6e6e6', tip:'#ffffff', base:'#9ea6a6'}, {c:'#93b0c4', tip:'#d0e5f5', base:'#648196'} ] }
         ];
         let currentBiome = BIOMES[0], sceneryProps = [], grandstands = [];
 
@@ -297,7 +324,7 @@
             carClass = cls;
             document.getElementById('classSelection').style.display = 'none';
             document.getElementById('trackSelection').style.display = 'block';
-            let desc = gameMode === 'RACE' ? "1 vs Bots (5 Voltas)" : "Time Trial Solo";
+            let desc = gameMode === 'RACE' ? "1 vs Bots (6 Voltas)" : "Time Trial Solo";
             desc += " | " + carClass;
             document.getElementById('modeDesc').innerText = desc;
             
@@ -321,21 +348,21 @@
             for(let i=0; i<8; i++) clouds.push({ x: Math.random() * window.innerWidth, y: Math.random() * window.innerHeight, size: Math.random() * 50 + 50, speed: Math.random() * 0.3 + 0.1, opacity: Math.random() * 0.3 + 0.3 });
             for(let f=0; f<3; f++) {
                 let bx = Math.random() * window.innerWidth; let by = Math.random() * window.innerHeight;
-                let angle = (Math.random() - 0.5) * 0.5; let speed = Math.random() * 1.5 + 1.0;
-                for(let i=0; i<5; i++) birds.push({ x: bx + (Math.random()-0.5)*50, y: by + (Math.random()-0.5)*50, speed: speed + (Math.random()-0.5)*0.2, angle: angle, flap: Math.random() * Math.PI * 2 });
+                let angle = (Math.random() - 0.5) * 0.5; let speed = Math.random() * 0.4 + 0.2; 
+                for(let i=0; i<5; i++) birds.push({ x: bx + (Math.random()-0.5)*50, y: by + (Math.random()-0.5)*50, speed: speed + (Math.random()-0.5)*0.1, angle: angle, flap: Math.random() * Math.PI * 2 });
             }
         }
         initSky();
 
         function spawnSmoke(x, y) {
-            smokeParticles.push({ x: x + (Math.random()-0.5)*8, y: y + (Math.random()-0.5)*8, vx: (Math.random()-0.5)*0.8, vy: (Math.random()-0.5)*0.8, life: 0.7, size: Math.random()*3 + 3 });
+            smokeParticles.push({ x: x + (Math.random()-0.5)*6, y: y + (Math.random()-0.5)*6, vx: (Math.random()-0.5)*0.6, vy: (Math.random()-0.5)*0.6, life: 0.5, size: Math.random()*2 + 2 });
         }
 
         function spawnSparks(x, y, angle) {
-            let numSparks = Math.floor(Math.random() * 3) + 2;
+            let numSparks = Math.floor(Math.random() * 6) + 4; 
             for(let i=0; i<numSparks; i++) {
                 let sparkAngle = angle + Math.PI + (Math.random() - 0.5) * 0.5;
-                let speed = Math.random() * 4 + 2;
+                let speed = Math.random() * 5 + 3;
                 sparkParticles.push({
                     x: x - Math.cos(angle)*12, 
                     y: y - Math.sin(angle)*12,
@@ -355,10 +382,25 @@
             context.beginPath(); context.arc(x, y, r*0.4, 0, Math.PI*2); context.fill();
         }
 
+        function drawPolygonLayer(ctx, x, y, radius, points, rotation, color) {
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            for (let i = 0; i < points * 2; i++) {
+                let r = (i % 2 === 0) ? radius : radius * 0.85; 
+                let a = rotation + (i * Math.PI) / points;
+                if (i === 0) ctx.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+                else ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r);
+            }
+            ctx.closePath();
+            ctx.fill();
+        }
+
         class Car {
             constructor(name, colorBase, isBot, offset, botProfile = null) {
                 this.name = name; this.colorBase = colorBase; this.isBot = isBot;
-                this.offset = offset; this.botProfile = botProfile; this.reset();
+                this.offset = offset; this.botProfile = botProfile; 
+                this.currentPosition = 1; 
+                this.reset();
             }
 
             reset() {
@@ -367,6 +409,7 @@
                 this.finished = false; this.finishTime = 0; this.botErrorFactor = 1.0; this.lastBotUpdate = 0;
                 this.inDangerZone = false; 
                 this.willErrorThisCurve = false; 
+                this.currentPosition = 1;
                 if(points.length > 0) this.updatePosition();
             }
 
@@ -385,13 +428,19 @@
                     if (now > this.derailTimer) { this.isDerailed = false; this.blink = false; } 
                 } else {
                     if (this.isBot) this.processAILogic(now);
-                    let myMaxSpeed = this.isBot ? currentMaxSpeed * this.botProfile.maxSpeedMult : currentMaxSpeed; 
-                    let myAccel = this.isBot ? currentAccel * this.botProfile.accelMult : currentAccel;
+                    
+                    // RUBBER-BANDING (Catch-up Mechanic 20% e 30%)
+                    let catchUpMult = 1.0;
+                    if (this.currentPosition === 2) catchUpMult = 1.20;
+                    if (this.currentPosition === 3) catchUpMult = 1.30;
+
+                    let myMaxSpeed = (this.isBot ? currentMaxSpeed * this.botProfile.maxSpeedMult : currentMaxSpeed) * catchUpMult; 
+                    let myAccel = (this.isBot ? currentAccel * this.botProfile.accelMult : currentAccel) * catchUpMult;
 
                     if (this.isAccelerating) {
                         this.speed += myAccel;
                         if (this.speed > myMaxSpeed) this.speed = myMaxSpeed;
-                        if (this.speed > 8.0 && Math.random() < 0.08) {
+                        if (this.speed > 8.0 && Math.random() < 0.12) {
                             spawnSparks(this.x, this.y, this.angle);
                         }
                     } else {
@@ -409,7 +458,7 @@
                         finishers.push(this); checkEndGame();
                     }
                 }
-                this.updatePosition(); this.checkDerail();
+                this.updatePosition(); this.checkDerail(now);
             }
 
             processAILogic(now) {
@@ -430,7 +479,11 @@
                     if(predictedForce > maxForce) maxForce = predictedForce;
                 }
 
-                let aiBaseThreshold = currentThreshold * 1.30;
+                let catchUpMult = 1.0;
+                if (this.currentPosition === 2) catchUpMult = 1.20;
+                if (this.currentPosition === 3) catchUpMult = 1.30;
+
+                let aiBaseThreshold = currentThreshold * 1.30 * catchUpMult;
                 let botThreshold = aiBaseThreshold * this.botProfile.thresholdMult;
                 let dangerous = (maxForce > botThreshold && this.speed > currentCornerSpeed);
 
@@ -461,7 +514,7 @@
                 this.y = base_y + Math.sin(this.angle - Math.PI/2) * this.offset;
             }
 
-            checkDerail() {
+            checkDerail(now) {
                 if (points.length < 10) return;
                 let idx = Math.floor(this.t); 
                 let n0 = idx; let n1 = (idx + 4) % points.length; let n2 = (idx + 8) % points.length; 
@@ -474,12 +527,16 @@
                 let curveSharpness = Math.pow(Math.abs(angleDiff), 1.1) * 1.5;
                 let centrifugal = Math.abs(angleDiff) * this.speed * (1 + curveSharpness);
                 
-                let myThreshold = this.isBot ? currentThreshold * 1.30 : currentThreshold;
+                let catchUpMult = 1.0;
+                if (this.currentPosition === 2) catchUpMult = 1.20;
+                if (this.currentPosition === 3) catchUpMult = 1.30;
+
+                let myThreshold = (this.isBot ? currentThreshold * 1.30 : currentThreshold) * catchUpMult;
 
                 if (centrifugal > myThreshold && this.speed > currentCornerSpeed && !this.isDerailed) {
                     this.isDerailed = true;
-                    this.derailTimer = performance.now() + 2800; 
-                    if(this === playerCar) playCrash();
+                    this.derailTimer = now + 2800; 
+                    if(this === playerCar) playDrift(); 
                 }
             }
 
@@ -523,9 +580,8 @@
         }
 
         let playerCar = new Car("Você", "#cc4135", false, 0);
-        // Bots: +5% Speed Boost aplicado em relação a ultima versao (0.48 * 1.05 = 0.50, 0.46 * 1.05 = 0.48)
-        let capBot = new Car("CAP-Bot", "#4a8bba", true, 14, { maxSpeedMult: 0.50, accelMult: 0.89, lookAheadMult: 2.2, thresholdMult: 0.96 });
-        let mariaBot = new Car("MARIA-Bot", "#50a66d", true, -14, { maxSpeedMult: 0.48, accelMult: 0.81, lookAheadMult: 2.8, thresholdMult: 0.88 });
+        let capBot = new Car("CAP-Bot", "#4a8bba", true, 10, { maxSpeedMult: 0.50, accelMult: 0.89, lookAheadMult: 2.2, thresholdMult: 0.96 });
+        let mariaBot = new Car("MARIA-Bot", "#50a66d", true, -10, { maxSpeedMult: 0.48, accelMult: 0.81, lookAheadMult: 2.8, thresholdMult: 0.88 });
         let allCars = [];
 
         function formatTime(ms) {
@@ -557,14 +613,14 @@
         function hideAllScreens() {
             startScreen.style.display = 'none'; confirmScreen.style.display = 'none';
             endScreen.style.display = 'none'; countdownOverlay.style.display = 'none';
-            hud.style.display = 'none'; btnAccelerate.style.display = 'none'; drawingHint.style.opacity = 0;
+            hud.style.display = 'none'; btnAccelerate.style.display = 'none'; btnPause.style.display = 'none'; drawingHint.style.opacity = 0;
         }
 
         function startDrawingPhase() {
             hideAllScreens(); gameState = 'DRAWING';
             rawPoints = []; points = []; previewPoints = []; sceneryProps = []; grandstands = []; 
             smokeParticles = []; sparkParticles = []; barriers = []; sandTraps = []; lakes = []; rocks = []; skidPaths = []; scatteredCrowd = [];
-            trackRecords = []; 
+            trackRecords = []; totalPausedTime = 0; pauseStartTime = 0; isPaused = false;
             document.body.style.backgroundColor = '#1a1a1a'; ctx.clearRect(0, 0, width, height);
             
             drawingHint.style.opacity = 1;
@@ -617,7 +673,7 @@
                 if (d < minDistanceToCenter) minDistanceToCenter = d;
             });
             
-            let lakeR = minDistanceToCenter - 45;
+            let lakeR = minDistanceToCenter - 30; 
             if (lakeR > 15) { 
                 if(lakeR > 110) lakeR = 110; 
                 lakes.push({x: cx, y: cy, r: lakeR, angle: Math.random() * Math.PI});
@@ -635,18 +691,18 @@
 
             for (let i = 0; i < 20; i++) {
                 let px = Math.random() * width; let py = Math.random() * height; let valid = true;
-                for (let pt of points) if (Math.hypot(pt.x - px, pt.y - py) < 80) { valid = false; break; }
+                for (let pt of points) if (Math.hypot(pt.x - px, pt.y - py) < 55) { valid = false; break; }
                 if(lakeR > 0 && Math.hypot(px - cx, py - cy) < lakeR + 25) valid = false;
                 if (valid) rocks.push({x: px, y: py, size: Math.random() * 10 + 7});
             }
 
             for (let i = 0; i < 400; i++) {
                 let px = Math.random() * width; let py = Math.random() * height; let valid = true;
-                for (let pt of points) if (Math.hypot(pt.x - px, pt.y - py) < 65) { valid = false; break; }
+                for (let pt of points) if (Math.hypot(pt.x - px, pt.y - py) < 45) { valid = false; break; }
                 if(lakeR > 0 && Math.hypot(px - cx, py - cy) < lakeR + 15) valid = false; 
                 if (valid) {
                     let style = currentBiome.props[Math.floor(Math.random() * currentBiome.props.length)];
-                    sceneryProps.push({x: px, y: py, style: style, size: Math.random() * 12 + 10});
+                    sceneryProps.push({x: px, y: py, style: style, size: Math.random() * 10 + 12, type: Math.random() > 0.5 ? 'ROUND' : 'PINE'});
                 }
             }
 
@@ -658,7 +714,7 @@
                 if(lineDist / curveDist > 0.98) {
                     let angle = Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x); let normal = angle + Math.PI/2;
                     let side = Math.random() > 0.5 ? 1 : -1;
-                    let tsx = pt1.x + Math.cos(normal) * 75 * side; let tsy = pt1.y + Math.sin(normal) * 75 * side;
+                    let tsx = pt1.x + Math.cos(normal) * 60 * side; let tsy = pt1.y + Math.sin(normal) * 60 * side;
                     let validStands = true;
                     if(lakeR > 0 && Math.hypot(tsx - cx, tsy - cy) < lakeR + 30) validStands = false;
                     if(validStands) {
@@ -676,7 +732,6 @@
                 }
             }
 
-            // Espectadores aleatórios na beira da pista
             for (let i = 0; i < points.length; i += 20) {
                 if (Math.random() < 0.25) { 
                     let p0 = points[(i - 1 + points.length) % points.length];
@@ -684,7 +739,7 @@
                     let tangent = Math.atan2(p1.y - p0.y, p1.x - p0.x);
                     let side = Math.random() > 0.5 ? 1 : -1;
                     let normal = tangent + (Math.PI/2) * side;
-                    let dist = 55 + Math.random() * 15; 
+                    let dist = 38 + Math.random() * 15; 
                     let gx = p1.x + Math.cos(normal) * dist;
                     let gy = p1.y + Math.sin(normal) * dist;
                     
@@ -726,18 +781,18 @@
                     let normal = tangent + (Math.PI/2) * side;
                     
                     if (sharpness > 0.15 && i % 3 === 0) { 
-                        sandTraps.push({ x: p1.x + Math.cos(normal) * 44, y: p1.y + Math.sin(normal) * 44, r: 25 + Math.random() * 8 });
+                        sandTraps.push({ x: p1.x + Math.cos(normal) * 30, y: p1.y + Math.sin(normal) * 30, r: 18 + Math.random() * 6 });
                         
                         for(let layer=0; layer<3; layer++) {
-                            let dist = 56 + layer * 7.5;
+                            let dist = 38 + layer * 7.5;
                             let offset = (layer % 2 === 0) ? 0 : 4.0;
                             let bx = p1.x + Math.cos(normal) * dist + Math.cos(tangent) * offset;
                             let by = p1.y + Math.sin(normal) * dist + Math.sin(tangent) * offset;
                             barriers.push({ x: bx, y: by, type: 'TIRES', index: i });
                         }
                     } else if (sharpness <= 0.15) { 
-                        let bx = p1.x + Math.cos(normal) * 38;
-                        let by = p1.y + Math.sin(normal) * 38;
+                        let bx = p1.x + Math.cos(normal) * 26;
+                        let by = p1.y + Math.sin(normal) * 26;
                         barriers.push({ x: bx, y: by, type: 'GUARDRAIL', index: i });
                     }
                 }
@@ -789,18 +844,27 @@
         function drawSceneryProps() {
             rocks.forEach(r => {
                 ctx.save(); ctx.translate(r.x, r.y);
-                ctx.fillStyle = '#7f8c8d'; ctx.beginPath(); ctx.arc(0, 0, r.size, 0, Math.PI*2); ctx.fill();
-                ctx.fillStyle = '#95a5a6'; ctx.beginPath(); ctx.arc(-r.size*0.2, -r.size*0.2, r.size*0.6, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#6b7275'; ctx.beginPath(); ctx.arc(0, 0, r.size, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#838b8e'; ctx.beginPath(); ctx.arc(-r.size*0.2, -r.size*0.2, r.size*0.6, 0, Math.PI*2); ctx.fill();
                 ctx.restore();
             });
 
             for (let prop of sceneryProps) {
-                ctx.save(); ctx.translate(prop.x + prop.size * 0.7, prop.y + prop.size * 0.7); ctx.rotate(Math.PI / 4); ctx.scale(1.5, 0.6);
-                ctx.beginPath(); ctx.arc(0, 0, prop.size, 0, Math.PI * 2); ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fill(); ctx.restore();
+                ctx.save();
+                drawPolygonLayer(ctx, prop.x + prop.size*0.2, prop.y + prop.size*0.2, prop.size, 7, 0, 'rgba(0,0,0,0.3)');
                 
-                let grad = ctx.createRadialGradient(prop.x - prop.size*0.25, prop.y - prop.size*0.25, 0, prop.x, prop.y, prop.size);
-                grad.addColorStop(0, prop.style.tip); grad.addColorStop(0.35, prop.style.c); grad.addColorStop(1, prop.style.base);
-                ctx.beginPath(); ctx.arc(prop.x, prop.y, prop.size, 0, Math.PI * 2); ctx.fillStyle = grad; ctx.fill(); 
+                let s1 = prop.size;
+                let s2 = prop.size * 0.75;
+                let s3 = prop.size * 0.55;
+                let s4 = prop.size * 0.35;
+
+                drawPolygonLayer(ctx, prop.x, prop.y, s1, 7, 0, prop.style.base);
+                drawPolygonLayer(ctx, prop.x, prop.y, s2, 7, 0.2, prop.style.c);
+                drawPolygonLayer(ctx, prop.x, prop.y, s3, 7, 0.4, prop.style.tip);
+                
+                drawPolygonLayer(ctx, prop.x, prop.y, s4, 7, 0.6, prop.style.tip);
+                drawPolygonLayer(ctx, prop.x, prop.y, s4, 7, 0.6, 'rgba(255,255,255,0.2)');
+                ctx.restore();
             }
 
             let now = performance.now();
@@ -814,7 +878,6 @@
                 ctx.restore();
             }
 
-            // Torcida solta
             for(let p of scatteredCrowd) {
                 let bounce = Math.abs(Math.sin(now/150 + p.phase)) * 4.5;
                 ctx.fillStyle = p.c; 
@@ -826,20 +889,30 @@
             clouds.forEach(c => {
                 ctx.fillStyle = `rgba(0, 0, 0, 0.15)`; ctx.beginPath();
                 let sx = c.x + 50; let sy = c.y + 50; 
-                ctx.arc(sx, sy, c.size, 0, Math.PI*2); ctx.arc(sx + c.size*0.5, sy - c.size*0.3, c.size*0.7, 0, Math.PI*2); ctx.arc(sx + c.size, sy, c.size*0.8, 0, Math.PI*2); ctx.fill();
+                ctx.arc(sx, sy, c.size, 0, Math.PI*2); 
+                ctx.arc(sx + c.size*0.4, sy - c.size*0.3, c.size*0.6, 0, Math.PI*2); 
+                ctx.arc(sx + c.size*0.8, sy - c.size*0.1, c.size*0.7, 0, Math.PI*2); 
+                ctx.arc(sx + c.size*1.2, sy, c.size*0.8, 0, Math.PI*2); 
+                ctx.arc(sx + c.size*0.6, sy + c.size*0.2, c.size*0.5, 0, Math.PI*2);
+                ctx.fill();
             });
 
             clouds.forEach(c => {
                 c.x += c.speed; if(c.x > width + c.size * 2) c.x = -c.size * 2;
                 ctx.fillStyle = `rgba(255, 255, 255, ${c.opacity})`; ctx.beginPath();
-                ctx.arc(c.x, c.y, c.size, 0, Math.PI*2); ctx.arc(c.x + c.size*0.5, c.y - c.size*0.3, c.size*0.7, 0, Math.PI*2); ctx.arc(c.x + c.size, c.y, c.size*0.8, 0, Math.PI*2); ctx.fill();
+                ctx.arc(c.x, c.y, c.size, 0, Math.PI*2); 
+                ctx.arc(c.x + c.size*0.4, c.y - c.size*0.3, c.size*0.6, 0, Math.PI*2); 
+                ctx.arc(c.x + c.size*0.8, c.y - c.size*0.1, c.size*0.7, 0, Math.PI*2); 
+                ctx.arc(c.x + c.size*1.2, c.y, c.size*0.8, 0, Math.PI*2); 
+                ctx.arc(c.x + c.size*0.6, c.y + c.size*0.2, c.size*0.5, 0, Math.PI*2);
+                ctx.fill();
             });
 
             ctx.strokeStyle = 'rgba(0,0,0,0.6)'; ctx.lineWidth = 2; ctx.lineCap = 'round';
             birds.forEach(b => {
                 b.x += b.speed * Math.cos(b.angle); b.y += b.speed * Math.sin(b.angle);
                 if(b.x > width + 20) b.x = -20; if(b.y > height + 20) b.y = -20; if(b.y < -20) b.y = height + 20;
-                b.flap += 0.2; let flapY = Math.sin(b.flap) * 4;
+                b.flap += 0.05; let flapY = Math.sin(b.flap) * 4;
                 ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.quadraticCurveTo(b.x - 5, b.y - flapY, b.x - 10, b.y - 5); ctx.moveTo(b.x, b.y); ctx.quadraticCurveTo(b.x - 5, b.y + flapY, b.x - 10, b.y + 5); ctx.stroke();
             });
         }
@@ -861,7 +934,7 @@
                 else { 
                     ctx.fillStyle = p.color; 
                     ctx.globalAlpha = p.life;
-                    ctx.fillRect(p.x, p.y, 2, 2); 
+                    ctx.fillRect(p.x, p.y, 3.5, 3.5); 
                     ctx.globalAlpha = 1.0;
                 }
             }
@@ -985,14 +1058,28 @@
             else { let last = rawPoints[rawPoints.length - 1]; if (Math.hypot(x - last.x, y - last.y) > MIN_DRAW_DIST) rawPoints.push({x, y}); }
         }
 
-        // CONTROLES DE ACELERADOR
         function pressAccelerate(e) { 
             if(e && e.preventDefault && e.target !== btnLoadTrack && !e.target.closest('button')) e.preventDefault(); 
-            playerCar.isAccelerating = true; btnAccelerate.classList.add('active'); 
+            if(gameState === 'RACING' && !isPaused) {
+                playerCar.isAccelerating = true; btnAccelerate.classList.add('active'); 
+            }
         }
         function releaseAccelerate(e) { 
-            if(e && e.preventDefault) e.preventDefault(); 
+            if(e && e.preventDefault && e.target !== btnPause) e.preventDefault(); 
             playerCar.isAccelerating = false; btnAccelerate.classList.remove('active'); 
+        }
+
+        function togglePause(e) {
+            if(e && e.preventDefault) e.preventDefault();
+            playClick();
+            isPaused = !isPaused;
+            btnPause.innerText = isPaused ? '▶' : '⏸';
+            if (isPaused) {
+                pauseStartTime = performance.now();
+                updateAudioEngine(0, false);
+            } else {
+                totalPausedTime += performance.now() - pauseStartTime;
+            }
         }
 
         canvas.addEventListener('mousedown', (e) => { 
@@ -1023,10 +1110,13 @@
 
         btnAccelerate.addEventListener('mousedown', pressAccelerate); btnAccelerate.addEventListener('touchstart', pressAccelerate, {passive: false});
         btnAccelerate.addEventListener('mouseup', releaseAccelerate); btnAccelerate.addEventListener('mouseleave', releaseAccelerate); btnAccelerate.addEventListener('touchend', releaseAccelerate);
+        btnPause.addEventListener('mousedown', togglePause); btnPause.addEventListener('touchstart', togglePause, {passive: false});
 
         function startCountdown() {
             gameState = 'COUNTDOWN';
             finishers = []; smokeParticles = []; sparkParticles = [];
+            isPaused = false; totalPausedTime = 0; pauseStartTime = 0;
+            btnPause.innerText = '⏸';
             
             currentMaxSpeed = carClass === 'F1' ? 14.0 : 11.5;
             currentAccel = carClass === 'F1' ? 0.08 : 0.06;
@@ -1040,6 +1130,8 @@
                 document.getElementById('mLapsWrapper').style.display = 'none';
             } else {
                 playerCar.offset = 0;
+                capBot.offset = 10;
+                mariaBot.offset = -10;
                 allCars = [capBot, playerCar, mariaBot];
                 document.getElementById('cLapsWrapper').style.display = 'inline';
                 document.getElementById('mLapsWrapper').style.display = 'inline';
@@ -1049,6 +1141,7 @@
             updateLapDisplays();
             countdownOverlay.style.display = 'flex';
             btnAccelerate.style.display = 'block';
+            btnPause.style.display = 'block';
             runCountdown();
         }
 
@@ -1077,7 +1170,7 @@
                 gameState = 'END';
                 updateAudioEngine(0, false);
                 cancelAnimationFrame(animationFrameId);
-                hud.style.display = 'none'; btnAccelerate.style.display = 'none';
+                hud.style.display = 'none'; btnAccelerate.style.display = 'none'; btnPause.style.display = 'none';
                 
                 if(finishers[0] === playerCar) playVictory(); 
                 
@@ -1115,26 +1208,21 @@
             for (let i = 1; i < targetPoints.length; i++) ctx.lineTo(targetPoints[i].x, targetPoints[i].y);
             ctx.closePath(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
             
-            // Fundo Branco da Zebra
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 64; ctx.stroke(); 
-            // Tracejado Vermelho da Zebra
-            ctx.strokeStyle = '#e74c3c'; ctx.lineWidth = 64; ctx.setLineDash([12, 12]); ctx.stroke(); ctx.setLineDash([]);  
-            // Asfalto Escuro (Cobre o meio da zebra e deixa margens vermelha/branca)
-            ctx.strokeStyle = '#1d1f21'; ctx.lineWidth = 54; ctx.stroke(); 
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 46; ctx.stroke(); 
+            ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 46; ctx.setLineDash([12, 12]); ctx.stroke(); ctx.setLineDash([]);  
             
-            // Skid Marks (Marcas Escuras)
-            ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#8a8e94'; ctx.lineWidth = 38; ctx.stroke(); 
+            
+            ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineJoin = 'round';
             for(let sp of skidPaths) {
                 if(sp.length < 2) continue;
-                let offsets = [-14, -8, 8, 14];
+                let offsets = [-10, -5, 5, 10];
                 offsets.forEach(off => {
                     ctx.beginPath(); ctx.moveTo(sp[0].x + sp[0].nx*off, sp[0].y + sp[0].ny*off);
                     for(let i=1; i<sp.length; i++) ctx.lineTo(sp[i].x + sp[i].nx*off, sp[i].y + sp[i].ny*off);
                     ctx.stroke();
                 });
             }
-
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 2; ctx.setLineDash([10, 15]); ctx.stroke(); ctx.setLineDash([]); 
 
             ctx.lineWidth = 3; ctx.strokeStyle = '#555'; ctx.beginPath(); let drawingGR = false;
             for (let i=0; i<barriers.length; i++) {
@@ -1148,44 +1236,56 @@
 
             for (let i=0; i<barriers.length; i++) {
                 let b = barriers[i];
-                if (b.type === 'TIRES') drawTire(ctx, b.x, b.y, 4.5);
+                if (b.type === 'TIRES') drawTire(ctx, b.x, b.y, 3);
             }
 
-            // Start Line (Quadriculada)
             ctx.save(); ctx.translate(targetPoints[0].x, targetPoints[0].y);
             let ang = Math.atan2(targetPoints[1].y - targetPoints[0].y, targetPoints[1].x - targetPoints[0].x);
             ctx.rotate(ang);
-            let sq = 6;
-            for(let i=0; i<4; i++) {
+            let sq = 4.5;
+            for(let i=0; i<3; i++) {
                 for(let j=-4; j<4; j++) {
                     ctx.fillStyle = (i+j)%2 === 0 ? '#fff' : '#000';
-                    ctx.fillRect(i*sq - 12, j*sq * 1.125, sq, sq*1.125);
+                    ctx.fillRect(i*sq - 6, j*sq * 1.125, sq, sq*1.125);
                 }
             }
             ctx.restore();
         }
 
         function update() {
+            if (isPaused) return;
             let now = performance.now();
+            let gameTime = now - totalPausedTime;
+
             if (finishers.length < allCars.length) {
-                elapsedTime = now - startTime; timerDisplay.innerText = formatTime(elapsedTime);
+                elapsedTime = gameTime - startTime; timerDisplay.innerText = formatTime(elapsedTime);
             }
-            allCars.forEach(car => car.updateLogic(now));
+
+            let sortedCars = [...allCars].sort((a, b) => {
+                let progA = a.finished ? 1000000 - a.finishTime : a.laps * points.length + a.t;
+                let progB = b.finished ? 1000000 - b.finishTime : b.laps * points.length + b.t;
+                return progB - progA;
+            });
+            sortedCars.forEach((car, index) => {
+                car.currentPosition = index + 1;
+            });
+
+            allCars.forEach(car => car.updateLogic(gameTime));
             updateAudioEngine(playerCar.speed, !playerCar.isAccelerating);
         }
 
         function loop() {
             if (gameState !== 'RACING') return; update();
-            ctx.clearRect(0, 0, width, height); 
-            
-            drawSceneryBase(); 
-            drawSceneryProps();
-            drawTrack(points); 
-            allCars.forEach(car => car.draw());
-            drawAndUpdateSparks();
-            drawAndUpdateSmoke(); 
-            drawSky();
-
+            if (!isPaused) {
+                ctx.clearRect(0, 0, width, height); 
+                drawSceneryBase(); 
+                drawSceneryProps();
+                drawTrack(points); 
+                allCars.forEach(car => car.draw());
+                drawAndUpdateSparks();
+                drawAndUpdateSmoke(); 
+                drawSky();
+            }
             animationFrameId = requestAnimationFrame(loop);
         }
         
@@ -1195,7 +1295,7 @@
                 if (rawPoints.length > 0) {
                     ctx.beginPath(); ctx.moveTo(rawPoints[0].x, rawPoints[0].y);
                     for (let i = 1; i < rawPoints.length; i++) ctx.lineTo(rawPoints[i].x, rawPoints[i].y);
-                    ctx.strokeStyle = '#34495e'; ctx.lineWidth = 40; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+                    ctx.strokeStyle = '#34495e'; ctx.lineWidth = 28; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
                 }
             } else if (gameState === 'CONFIRM') { 
                 ctx.clearRect(0, 0, width, height); 

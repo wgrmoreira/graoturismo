@@ -286,29 +286,30 @@
         let trackRecords = []; 
         let isPaused = false;
         
-        // FÍSICA E BALANCEAMENTO
+        // FÍSICA E BALANCEAMENTO GERAL
         const SPACING = 5;             
         const BRAKING_FORCE = 0.35; 
         const BASE_MIN_SPEED = 2.76;      
         const MIN_DRAW_DIST = 10;
         const TOTAL_LAPS = 6; 
+        
+        // SOMBRAS GLOBAIS - "16:00"
+        const SHADOW_X = 8;
+        const SHADOW_Y = 6;
 
-        // FÍSICA DINÂMICA
         let currentMaxSpeed, currentAccel, currentThreshold, currentCornerSpeed;
 
         let startTime = 0, elapsedTime = 0, pauseStartTime = 0, totalPausedTime = 0, animationFrameId, finishers = [];
-        let smokeParticles = [];
-        let sparkParticles = []; 
-        let clouds = [], birds = [], barriers = [], sandTraps = [], lakes = [], rocks = [], skidPaths = [], scatteredCrowd = [];
+        let smokeParticles = [], sparkParticles = []; 
+        let clouds = [], birds = [], barriers = [], sandTraps = [], lakes = [], rocks = [], skidPaths = [], scatteredCrowd = [], postes = [], passarelas = [];
 
         let bgCanvas = document.createElement('canvas');
         let bgCtx = bgCanvas.getContext('2d');
 
-        // Cores Menos Saturadas e Naturais
         const BIOMES = [
-            { name: 'FOREST', bg: '#415d47', vars: ['#39523e', '#48664e', '#334a37', '#3c5741'], props: [ {c:'#2e663c', tip:'#458f57', base:'#1b4225'}, {c:'#295c35', tip:'#3d824d', base:'#173d20'} ] },
-            { name: 'DESERT', bg: '#ab8d66', vars: ['#9c805c', '#b8986e', '#8a7151', '#c7a477'], props: [ {c:'#c27732', tip:'#d99757', base:'#8a4f1a'}, {c:'#3d7a54', tip:'#6eb087', base:'#254f34'} ] },
-            { name: 'SNOW',   bg: '#b9c2c2', vars: ['#aab4b4', '#c8cece', '#95a1a1', '#d2dbdb'], props: [ {c:'#e6e6e6', tip:'#ffffff', base:'#9ea6a6'}, {c:'#93b0c4', tip:'#d0e5f5', base:'#648196'} ] }
+            { name: 'FOREST', bg: '#3a533d', vars: ['#334a36', '#415e45', '#2e4230', '#37503a'], props: [ {c:'#245230', tip:'#3a7a49', base:'#16361e'}, {c:'#1f4729', tip:'#336b3f', base:'#122e18'} ] },
+            { name: 'DESERT', bg: '#a3845b', vars: ['#917450', '#ad8d62', '#826848', '#b59468'], props: [ {c:'#c27732', tip:'#d99757', base:'#8a4f1a'}, {c:'#3d7a54', tip:'#6eb087', base:'#254f34'} ] },
+            { name: 'SNOW',   bg: '#b0b8b8', vars: ['#a0a8a8', '#bbc3c3', '#919999', '#c4cccc'], props: [ {c:'#e6e6e6', tip:'#ffffff', base:'#9ea6a6'}, {c:'#93b0c4', tip:'#d0e5f5', base:'#648196'} ] }
         ];
         let currentBiome = BIOMES[0], sceneryProps = [], grandstands = [];
 
@@ -429,7 +430,6 @@
                 } else {
                     if (this.isBot) this.processAILogic(now);
                     
-                    // RUBBER-BANDING (Catch-up Mechanic 20% e 30%)
                     let catchUpMult = 1.0;
                     if (this.currentPosition === 2) catchUpMult = 1.20;
                     if (this.currentPosition === 3) catchUpMult = 1.30;
@@ -542,16 +542,20 @@
 
             draw() {
                 if (this.blink) return; 
+                ctx.save(); 
+                
+                ctx.translate(this.x + SHADOW_X, this.y + SHADOW_Y); ctx.rotate(this.angle);
+                ctx.fillStyle = "rgba(0,0,0,0.5)"; 
+                ctx.fillRect(-12, -7, 24, 14);
+                ctx.restore();
+
                 ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle);
 
-                if(!this.finished) { ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowOffsetY = 4; ctx.shadowOffsetX = 2; ctx.shadowBlur = 4; }
-                
                 if (carClass === 'F1') {
                     ctx.fillStyle = this.colorBase; 
                     ctx.fillRect(-10, -3, 20, 6); 
                     ctx.fillRect(10, -1.5, 8, 3); 
                     
-                    ctx.shadowColor = 'transparent';
                     ctx.fillStyle = '#222'; 
                     ctx.fillRect(14, -6, 3, 12);  
                     ctx.fillRect(-12, -5, 4, 10); 
@@ -566,8 +570,6 @@
                     
                 } else {
                     ctx.fillStyle = this.colorBase; ctx.fillRect(-12, -7, 24, 14);
-                    ctx.shadowColor = 'transparent'; 
-                    
                     ctx.fillStyle = '#ecf0f1'; ctx.fillRect(-3, -5, 8, 10); 
                     ctx.fillStyle = '#f1c40f'; ctx.fillRect(10, -6, 2, 3); ctx.fillRect(10, 3, 2, 3); 
                     ctx.fillStyle = '#ff3838'; ctx.fillRect(-12, -6, 2, 3); ctx.fillRect(-12, 3, 2, 3); 
@@ -620,11 +622,44 @@
             hideAllScreens(); gameState = 'DRAWING';
             rawPoints = []; points = []; previewPoints = []; sceneryProps = []; grandstands = []; 
             smokeParticles = []; sparkParticles = []; barriers = []; sandTraps = []; lakes = []; rocks = []; skidPaths = []; scatteredCrowd = [];
+            postes = []; passarelas = [];
             trackRecords = []; totalPausedTime = 0; pauseStartTime = 0; isPaused = false;
             document.body.style.backgroundColor = '#1a1a1a'; ctx.clearRect(0, 0, width, height);
             
             drawingHint.style.opacity = 1;
             setTimeout(() => { drawingHint.style.opacity = 0; }, 2500);
+        }
+
+        function reorderPointsToLongestStraight(pts) {
+            if(pts.length < 15) return pts;
+            let maxStraightLen = 0;
+            let bestIndex = 0;
+            let currentLen = 0;
+            let startIndex = 0;
+
+            for(let i=0; i<pts.length * 2; i++) { 
+                let idx = i % pts.length;
+                let prevIdx = (i - 5 + pts.length) % pts.length;
+                let nextIdx = (idx + 5) % pts.length;
+
+                let a1 = Math.atan2(pts[idx].y - pts[prevIdx].y, pts[idx].x - pts[prevIdx].x);
+                let a2 = Math.atan2(pts[nextIdx].y - pts[idx].y, pts[nextIdx].x - pts[idx].x);
+                let diff = Math.abs(a2 - a1);
+                while(diff > Math.PI) diff -= Math.PI*2;
+                diff = Math.abs(diff);
+
+                if (diff < 0.05) { 
+                    if (currentLen === 0) startIndex = idx;
+                    currentLen++;
+                    if (currentLen > maxStraightLen) {
+                        maxStraightLen = currentLen;
+                        bestIndex = (startIndex + Math.floor(currentLen / 2)) % pts.length;
+                    }
+                } else {
+                    currentLen = 0;
+                }
+            }
+            return pts.slice(bestIndex).concat(pts.slice(0, bestIndex));
         }
 
         function centerTrack(ptsArray) {
@@ -662,6 +697,7 @@
             generateBackgroundTexture();
             
             sceneryProps = []; lakes = []; rocks = []; sandTraps = []; barriers = []; skidPaths = []; scatteredCrowd = [];
+            postes = []; passarelas = [];
 
             let cx = 0, cy = 0;
             points.forEach(p => { cx += p.x; cy += p.y; });
@@ -715,8 +751,13 @@
                     let angle = Math.atan2(pt2.y - pt1.y, pt2.x - pt1.x); let normal = angle + Math.PI/2;
                     let side = Math.random() > 0.5 ? 1 : -1;
                     let tsx = pt1.x + Math.cos(normal) * 60 * side; let tsy = pt1.y + Math.sin(normal) * 60 * side;
+                    
                     let validStands = true;
                     if(lakeR > 0 && Math.hypot(tsx - cx, tsy - cy) < lakeR + 30) validStands = false;
+                    for (let p of points) {
+                        if (Math.hypot(tsx - p.x, tsy - p.y) < 40) { validStands = false; break; }
+                    }
+
                     if(validStands) {
                         let crowd = [];
                         for(let k=0; k<180; k++){
@@ -732,6 +773,24 @@
                 }
             }
 
+            for(let i = 20; i < points.length; i += 30) {
+                let p1 = points[i];
+                let p2 = points[(i+5)%points.length];
+                let tangent = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                let normal = tangent + Math.PI/2;
+                
+                if(Math.random() < 0.6) {
+                    postes.push({ x: p1.x + Math.cos(normal)*30, y: p1.y + Math.sin(normal)*30, angle: normal + Math.PI });
+                }
+            }
+
+            if(points.length > 100) {
+                let bridgeIdx = Math.floor(points.length / 2);
+                let bp1 = points[bridgeIdx]; let bp2 = points[(bridgeIdx+5)%points.length];
+                let angle = Math.atan2(bp2.y - bp1.y, bp2.x - bp1.x);
+                passarelas.push({ x: bp1.x, y: bp1.y, angle: angle });
+            }
+
             for (let i = 0; i < points.length; i += 20) {
                 if (Math.random() < 0.25) { 
                     let p0 = points[(i - 1 + points.length) % points.length];
@@ -744,9 +803,9 @@
                     let gy = p1.y + Math.sin(normal) * dist;
                     
                     let valid = true;
-                    for (let l of lakes) {
-                        if (Math.hypot(gx - l.x, gy - l.y) < l.r + 10) valid = false;
-                    }
+                    for (let l of lakes) if (Math.hypot(gx - l.x, gy - l.y) < l.r + 10) valid = false;
+                    for (let p of points) if (Math.hypot(gx - p.x, gy - p.y) < 30) valid = false;
+
                     if (valid) {
                         let numFans = Math.floor(Math.random() * 6) + 3;
                         for(let f=0; f<numFans; f++) {
@@ -776,6 +835,9 @@
                 let sharpness = Math.abs(angleDiff);
                 let tangent = Math.atan2(p2.y - p0.y, p2.x - p0.x);
                 
+                points[i].curve = angleDiff;
+                points[i].normal = tangent + (Math.PI/2);
+
                 if (sharpness > 0.08) {
                     let side = angleDiff > 0 ? -1 : 1; 
                     let normal = tangent + (Math.PI/2) * side;
@@ -783,9 +845,9 @@
                     if (sharpness > 0.15 && i % 3 === 0) { 
                         sandTraps.push({ x: p1.x + Math.cos(normal) * 30, y: p1.y + Math.sin(normal) * 30, r: 18 + Math.random() * 6 });
                         
-                        for(let layer=0; layer<3; layer++) {
-                            let dist = 38 + layer * 7.5;
-                            let offset = (layer % 2 === 0) ? 0 : 4.0;
+                        for(let layer=0; layer<2; layer++) {
+                            let dist = 38 + layer * 3.5;
+                            let offset = (layer % 2 === 0) ? 0 : 2.0;
                             let bx = p1.x + Math.cos(normal) * dist + Math.cos(tangent) * offset;
                             let by = p1.y + Math.sin(normal) * dist + Math.sin(tangent) * offset;
                             barriers.push({ x: bx, y: by, type: 'TIRES', index: i });
@@ -808,7 +870,7 @@
         }
 
         function drawLakesAndSand() {
-            ctx.fillStyle = '#d2b48c'; 
+            ctx.fillStyle = '#a89f91'; 
             sandTraps.forEach(s => {
                 ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fill();
             });
@@ -844,6 +906,7 @@
         function drawSceneryProps() {
             rocks.forEach(r => {
                 ctx.save(); ctx.translate(r.x, r.y);
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.beginPath(); ctx.arc(SHADOW_X, SHADOW_Y, r.size, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#6b7275'; ctx.beginPath(); ctx.arc(0, 0, r.size, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = '#838b8e'; ctx.beginPath(); ctx.arc(-r.size*0.2, -r.size*0.2, r.size*0.6, 0, Math.PI*2); ctx.fill();
                 ctx.restore();
@@ -851,25 +914,24 @@
 
             for (let prop of sceneryProps) {
                 ctx.save();
-                drawPolygonLayer(ctx, prop.x + prop.size*0.2, prop.y + prop.size*0.2, prop.size, 7, 0, 'rgba(0,0,0,0.3)');
+                drawPolygonLayer(ctx, prop.x + SHADOW_X, prop.y + SHADOW_Y, prop.size, 7, 0, 'rgba(0,0,0,0.4)'); 
                 
-                let s1 = prop.size;
-                let s2 = prop.size * 0.75;
-                let s3 = prop.size * 0.55;
-                let s4 = prop.size * 0.35;
+                let s1 = prop.size; let s2 = prop.size * 0.75; let s3 = prop.size * 0.55; let s4 = prop.size * 0.35;
 
                 drawPolygonLayer(ctx, prop.x, prop.y, s1, 7, 0, prop.style.base);
                 drawPolygonLayer(ctx, prop.x, prop.y, s2, 7, 0.2, prop.style.c);
                 drawPolygonLayer(ctx, prop.x, prop.y, s3, 7, 0.4, prop.style.tip);
                 
                 drawPolygonLayer(ctx, prop.x, prop.y, s4, 7, 0.6, prop.style.tip);
-                drawPolygonLayer(ctx, prop.x, prop.y, s4, 7, 0.6, 'rgba(255,255,255,0.2)');
+                drawPolygonLayer(ctx, prop.x, prop.y, s4, 7, 0.6, 'rgba(255,255,255,0.2)'); 
                 ctx.restore();
             }
 
             let now = performance.now();
             for (let stand of grandstands) {
                 ctx.save(); ctx.translate(stand.x, stand.y); ctx.rotate(stand.angle);
+                
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-85 + SHADOW_X, -16 + SHADOW_Y, 170, 32);
                 ctx.fillStyle = '#444'; ctx.fillRect(-85, -16, 170, 32); ctx.fillStyle = '#222'; ctx.fillRect(-83, -13, 166, 26);
                 for(let p of stand.crowd) {
                     let bounce = Math.abs(Math.sin(now/150 + p.phase)) * 4.5;
@@ -883,12 +945,36 @@
                 ctx.fillStyle = p.c; 
                 ctx.beginPath(); ctx.arc(p.x, p.y - bounce, 2, 0, Math.PI*2); ctx.fill();
             }
+
+            postes.forEach(pt => {
+                ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(pt.x + SHADOW_X, pt.y + SHADOW_Y); ctx.lineTo(pt.x + Math.cos(pt.angle)*18 + SHADOW_X, pt.y + Math.sin(pt.angle)*18 + SHADOW_Y); ctx.stroke();
+            });
+        }
+
+        function drawOverheadElements() {
+            postes.forEach(pt => {
+                ctx.strokeStyle = '#7f8c8d'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.moveTo(pt.x, pt.y); ctx.lineTo(pt.x + Math.cos(pt.angle)*18, pt.y + Math.sin(pt.angle)*18); ctx.stroke();
+                ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(pt.x + Math.cos(pt.angle)*18, pt.y + Math.sin(pt.angle)*18, 4, 0, Math.PI*2); ctx.fill();
+            });
+
+            passarelas.forEach(ps => {
+                ctx.save(); ctx.translate(ps.x, ps.y); ctx.rotate(ps.angle);
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(-15 + SHADOW_X, -40 + SHADOW_Y, 30, 80);
+                
+                ctx.fillStyle = '#95a5a6'; ctx.fillRect(-15, -40, 30, 80);
+                ctx.fillStyle = '#3498db'; ctx.fillRect(-15, -20, 30, 40);
+                ctx.fillStyle = '#fff'; ctx.font = "bold 12px Arial"; ctx.textAlign = "center";
+                ctx.fillText("GRAO", 0, 0); ctx.fillText("TURISMO", 0, 12);
+                ctx.restore();
+            });
         }
 
         function drawSky() {
             clouds.forEach(c => {
                 ctx.fillStyle = `rgba(0, 0, 0, 0.15)`; ctx.beginPath();
-                let sx = c.x + 50; let sy = c.y + 50; 
+                let sx = c.x + SHADOW_X*6; let sy = c.y + SHADOW_Y*6; 
                 ctx.arc(sx, sy, c.size, 0, Math.PI*2); 
                 ctx.arc(sx + c.size*0.4, sy - c.size*0.3, c.size*0.6, 0, Math.PI*2); 
                 ctx.arc(sx + c.size*0.8, sy - c.size*0.1, c.size*0.7, 0, Math.PI*2); 
@@ -1024,7 +1110,10 @@
                     let relaxed = applyMovingAverage(closedRaw, 8);
                     let smoothed = smoothTrack(relaxed, 6);
                     points = makeUniform(applyMovingAverage(smoothed, 10), SPACING);
-                    centerTrack(points); centerTrack(rawPoints); 
+                    
+                    points = reorderPointsToLongestStraight(points);
+                    
+                    centerTrack(points); 
                     generateSceneryAndStands(); 
                     startCountdown();
                 } catch(e) { console.error(e); gameState = 'START'; }
@@ -1204,16 +1293,65 @@
 
         function drawTrack(targetPoints) {
             if (!targetPoints || targetPoints.length < 2) return;
+            
+            // Asfalto Base
             ctx.beginPath(); ctx.moveTo(targetPoints[0].x, targetPoints[0].y);
             for (let i = 1; i < targetPoints.length; i++) ctx.lineTo(targetPoints[i].x, targetPoints[i].y);
             ctx.closePath(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-            
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 46; ctx.stroke(); 
-            ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 46; ctx.setLineDash([12, 12]); ctx.stroke(); ctx.setLineDash([]);  
-            
-            ctx.strokeStyle = '#8a8e94'; ctx.lineWidth = 38; ctx.stroke(); 
-            
-            ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(0,0,0,0.25)'; ctx.lineJoin = 'round';
+            ctx.strokeStyle = '#242528'; ctx.lineWidth = 44; ctx.stroke(); 
+
+            // Zebras Dinâmicas Corrigidas
+            for(let side of [1, -1]) {
+                ctx.lineWidth = 6; ctx.lineCap = 'butt';
+                let isDrawing = false;
+                ctx.beginPath();
+                for(let i=0; i<=targetPoints.length; i++){
+                    let idx = i % targetPoints.length;
+                    let p = targetPoints[idx];
+                    
+                    let p_next = targetPoints[(idx+1)%targetPoints.length];
+                    let tangent = Math.atan2(p_next.y - p.y, p_next.x - p.x);
+                    let norm = tangent + (Math.PI/2) * side;
+                    
+                    let px = p.x + Math.cos(norm) * 23; 
+                    let py = p.y + Math.sin(norm) * 23; 
+
+                    if (Math.abs(p.curve) > 0.05) {
+                        if(!isDrawing) { ctx.moveTo(px, py); isDrawing = true; }
+                        else { ctx.lineTo(px, py); }
+                    } else {
+                        if(isDrawing) { ctx.lineTo(px, py); isDrawing = false; }
+                    }
+                }
+                ctx.strokeStyle = '#fff'; ctx.setLineDash([]); ctx.stroke();
+                ctx.strokeStyle = '#e74c3c'; ctx.setLineDash([12, 12]); ctx.stroke();
+            }
+
+            // Linha Branca Contínua (Limites)
+            ctx.setLineDash([]);
+            ctx.lineWidth = 1.5; ctx.strokeStyle = '#ffffff';
+            for(let side of [1, -1]) {
+                ctx.beginPath();
+                for (let i = 0; i <= targetPoints.length; i++) {
+                    let idx = i % targetPoints.length;
+                    let p = targetPoints[idx];
+                    let p_next = targetPoints[(idx+1)%targetPoints.length];
+                    let norm = Math.atan2(p_next.y - p.y, p_next.x - p.x) + (Math.PI/2) * side;
+                    let px = p.x + Math.cos(norm) * 20;
+                    let py = p.y + Math.sin(norm) * 20;
+                    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+                }
+                ctx.stroke();
+            }
+
+            // Linha Tracejada Central
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1.5; ctx.setLineDash([10, 15]); 
+            ctx.beginPath(); ctx.moveTo(targetPoints[0].x, targetPoints[0].y);
+            for (let i = 1; i <= targetPoints.length; i++) ctx.lineTo(targetPoints[i%targetPoints.length].x, targetPoints[i%targetPoints.length].y);
+            ctx.stroke(); ctx.setLineDash([]);
+
+            // Skid Marks
+            ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineJoin = 'round';
             for(let sp of skidPaths) {
                 if(sp.length < 2) continue;
                 let offsets = [-10, -5, 5, 10];
@@ -1224,6 +1362,15 @@
                 });
             }
 
+            // Sombras das Barreiras 16h
+            for (let b of barriers) {
+                if (b.type === 'TIRES') {
+                    ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                    ctx.beginPath(); ctx.arc(b.x + SHADOW_X, b.y + SHADOW_Y, 4.5, 0, Math.PI*2); ctx.fill();
+                }
+            }
+
+            // Guardrails
             ctx.lineWidth = 3; ctx.strokeStyle = '#555'; ctx.beginPath(); let drawingGR = false;
             for (let i=0; i<barriers.length; i++) {
                 let b = barriers[i];
@@ -1234,20 +1381,43 @@
             }
             ctx.stroke();
 
-            for (let i=0; i<barriers.length; i++) {
-                let b = barriers[i];
-                if (b.type === 'TIRES') drawTire(ctx, b.x, b.y, 3);
+            // Pneus de Barreira
+            for (let b of barriers) {
+                if (b.type === 'TIRES') drawTire(ctx, b.x, b.y, 4.5);
             }
 
+            // Paddock / Garagens (Início)
             ctx.save(); ctx.translate(targetPoints[0].x, targetPoints[0].y);
             let ang = Math.atan2(targetPoints[1].y - targetPoints[0].y, targetPoints[1].x - targetPoints[0].x);
             ctx.rotate(ang);
+            
+            // Chão do Pit Lane e Muro
+            ctx.fillStyle = '#1c1e20'; ctx.fillRect(-20, 24, 160, 20); 
+            ctx.fillStyle = '#555'; ctx.fillRect(-20, 24, 160, 2); 
+            ctx.fillStyle = '#7f8c8d'; ctx.fillRect(-20, 44, 160, 25);
+            
+            let colors = ['#e74c3c', '#3498db', '#f1c40f', '#2ecc71', '#9b59b6'];
+            for(let g=0; g<5; g++) {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(10 + g*30 + SHADOW_X, 36 + SHADOW_Y, 24, 20);
+                ctx.fillStyle = colors[g]; ctx.fillRect(10 + g*30, 36, 24, 20); 
+                ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(10 + g*30, 52, 24, 4); 
+            }
+
+            // Start Line (Quadriculada)
             let sq = 4.5;
             for(let i=0; i<3; i++) {
                 for(let j=-4; j<4; j++) {
                     ctx.fillStyle = (i+j)%2 === 0 ? '#fff' : '#000';
                     ctx.fillRect(i*sq - 6, j*sq * 1.125, sq, sq*1.125);
                 }
+            }
+            
+            // Grid Slots
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5;
+            for(let g=1; g<=3; g++) {
+                let offset = g * -25;
+                ctx.beginPath(); ctx.moveTo(offset, -10); ctx.lineTo(offset-8, -10); ctx.lineTo(offset-8, -2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(offset - 12.5, 2); ctx.lineTo(offset - 20.5, 2); ctx.lineTo(offset-20.5, 10); ctx.stroke();
             }
             ctx.restore();
         }
@@ -1282,6 +1452,7 @@
                 drawSceneryProps();
                 drawTrack(points); 
                 allCars.forEach(car => car.draw());
+                drawOverheadElements();
                 drawAndUpdateSparks();
                 drawAndUpdateSmoke(); 
                 drawSky();
@@ -1309,6 +1480,7 @@
                 drawSceneryProps();
                 drawTrack(points); 
                 allCars.forEach(car => car.draw()); 
+                drawOverheadElements();
                 drawSky();
             }
             requestAnimationFrame(renderInterface);

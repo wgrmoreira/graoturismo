@@ -285,11 +285,12 @@
         let carClass = 'GT'; 
         let trackRecords = []; 
         let isPaused = false;
+        let isNight = false;
         
-        // FÍSICA E BALANCEAMENTO GERAL
+        // FÍSICA E BALANCEAMENTO
         const SPACING = 5;             
-        const BRAKING_FORCE = 0.35; 
-        const BASE_MIN_SPEED = 2.76;      
+        const BRAKING_FORCE = 0.04; 
+        const BASE_MIN_SPEED = 0;   
         const MIN_DRAW_DIST = 10;
         const TOTAL_LAPS = 6; 
         
@@ -406,7 +407,7 @@
 
             reset() {
                 this.t = 0; this.speed = 0; this.laps = 0; this.x = 0; this.y = 0; this.angle = 0;
-                this.isAccelerating = false; this.isDerailed = false; this.derailTimer = 0; this.blink = false;
+                this.isAccelerating = false; this.isDerailed = false; this.derailTimer = 0; 
                 this.finished = false; this.finishTime = 0; this.botErrorFactor = 1.0; this.lastBotUpdate = 0;
                 this.inDangerZone = false; 
                 this.willErrorThisCurve = false; 
@@ -422,31 +423,32 @@
                 }
 
                 if (this.isDerailed) {
-                    this.blink = !this.blink;
                     spawnSmoke(this.x, this.y);
-                    this.speed *= 0.85; 
-                    if (this.speed < BASE_MIN_SPEED) this.speed = BASE_MIN_SPEED;
-                    if (now > this.derailTimer) { this.isDerailed = false; this.blink = false; } 
-                } else {
-                    if (this.isBot) this.processAILogic(now);
-                    
-                    let catchUpMult = 1.0;
-                    if (this.currentPosition === 2) catchUpMult = 1.20;
-                    if (this.currentPosition === 3) catchUpMult = 1.30;
+                    if (now > this.derailTimer) { this.isDerailed = false; } 
+                }
 
-                    let myMaxSpeed = (this.isBot ? currentMaxSpeed * this.botProfile.maxSpeedMult : currentMaxSpeed) * catchUpMult; 
-                    let myAccel = (this.isBot ? currentAccel * this.botProfile.accelMult : currentAccel) * catchUpMult;
+                if (this.isBot) this.processAILogic(now);
+                
+                let catchUpMult = 1.0;
+                if (this.currentPosition === 2) catchUpMult = 1.20;
+                if (this.currentPosition === 3) catchUpMult = 1.30;
 
-                    if (this.isAccelerating) {
-                        this.speed += myAccel;
-                        if (this.speed > myMaxSpeed) this.speed = myMaxSpeed;
-                        if (this.speed > 8.0 && Math.random() < 0.12) {
-                            spawnSparks(this.x, this.y, this.angle);
-                        }
-                    } else {
-                        this.speed -= BRAKING_FORCE;
-                        if (this.speed < BASE_MIN_SPEED) this.speed = BASE_MIN_SPEED;
+                let myMaxSpeed = (this.isBot ? currentMaxSpeed * this.botProfile.maxSpeedMult : currentMaxSpeed) * catchUpMult; 
+                let myAccel = (this.isBot ? currentAccel * this.botProfile.accelMult : currentAccel) * catchUpMult;
+
+                if (this.isDerailed) {
+                    myMaxSpeed *= 0.5; 
+                }
+
+                if (this.isAccelerating) {
+                    this.speed += myAccel;
+                    if (this.speed > myMaxSpeed) this.speed = myMaxSpeed;
+                    if (this.speed > 8.0 && Math.random() < 0.12 && !this.isDerailed) {
+                        spawnSparks(this.x, this.y, this.angle);
                     }
+                } else {
+                    this.speed -= BRAKING_FORCE;
+                    if (this.speed < BASE_MIN_SPEED) this.speed = BASE_MIN_SPEED;
                 }
 
                 this.t += this.speed / SPACING;
@@ -535,13 +537,13 @@
 
                 if (centrifugal > myThreshold && this.speed > currentCornerSpeed && !this.isDerailed) {
                     this.isDerailed = true;
-                    this.derailTimer = now + 2800; 
+                    this.derailTimer = now + 2000; 
+                    this.speed *= 0.5; 
                     if(this === playerCar) playDrift(); 
                 }
             }
 
-            draw() {
-                if (this.blink) return; 
+            drawBase() {
                 ctx.save(); 
                 
                 ctx.translate(this.x + SHADOW_X, this.y + SHADOW_Y); ctx.rotate(this.angle);
@@ -578,6 +580,38 @@
 
                 if(this.finished) { ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(-14, -10, 30, 20); }
                 ctx.restore();
+            }
+
+            drawHeadlights(context) {
+                if (!isNight) return;
+                context.save(); 
+                context.translate(this.x, this.y); 
+                context.rotate(this.angle);
+                
+                let grad = context.createLinearGradient(10, 0, 150, 0);
+                grad.addColorStop(0, 'rgba(255, 255, 200, 0.7)');
+                grad.addColorStop(1, 'rgba(255, 255, 200, 0)');
+                
+                context.fillStyle = grad;
+                context.beginPath();
+                if (carClass === 'F1') {
+                    context.moveTo(10, -5); context.lineTo(150, -35); context.lineTo(150, 35); context.lineTo(10, 5);
+                } else {
+                    context.moveTo(10, -8); context.lineTo(150, -45); context.lineTo(150, 45); context.lineTo(10, 8);
+                }
+                context.fill();
+
+                context.fillStyle = (this.speed < BASE_MIN_SPEED + 0.1 || this.isDerailed || !this.isAccelerating) ? '#ff0000' : '#880000';
+                context.shadowColor = '#ff0000';
+                context.shadowBlur = 10;
+                if (carClass === 'F1') {
+                    context.fillRect(-12, -4, 2, 8);
+                } else {
+                    context.fillRect(-13, -7, 3, 4);
+                    context.fillRect(-13, 3, 3, 4);
+                }
+                
+                context.restore();
             }
         }
 
@@ -628,6 +662,21 @@
             
             drawingHint.style.opacity = 1;
             setTimeout(() => { drawingHint.style.opacity = 0; }, 2500);
+        }
+
+        function calculateCurvature(pts) {
+            for (let i = 0; i < pts.length; i++) {
+                let p0 = pts[(i - 5 + pts.length) % pts.length];
+                let p1 = pts[i];
+                let p2 = pts[(i + 5) % pts.length];
+                let a1 = Math.atan2(p1.y - p0.y, p1.x - p0.x);
+                let a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                let angleDiff = a2 - a1;
+                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
+                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
+                pts[i].curve = angleDiff;
+                pts[i].normal = Math.atan2(p2.y - p0.y, p2.x - p0.x) + (Math.PI/2);
+            }
         }
 
         function reorderPointsToLongestStraight(pts) {
@@ -694,6 +743,10 @@
 
         function generateSceneryAndStands() {
             currentBiome = BIOMES[Math.floor(Math.random() * BIOMES.length)];
+            
+            // 1 em 5 chance de ser noite (4 para 1)
+            isNight = Math.random() < 0.2; 
+            
             generateBackgroundTexture();
             
             sceneryProps = []; lakes = []; rocks = []; sandTraps = []; barriers = []; skidPaths = []; scatteredCrowd = [];
@@ -780,7 +833,7 @@
                 let normal = tangent + Math.PI/2;
                 
                 if(Math.random() < 0.6) {
-                    postes.push({ x: p1.x + Math.cos(normal)*30, y: p1.y + Math.sin(normal)*30, angle: normal + Math.PI });
+                    postes.push({ x: p1.x + Math.cos(normal)*26, y: p1.y + Math.sin(normal)*26, angle: normal + Math.PI });
                 }
             }
 
@@ -971,6 +1024,18 @@
             });
         }
 
+        function drawPosteLights() {
+            postes.forEach(pt => {
+                let lx = pt.x + Math.cos(pt.angle)*18;
+                let ly = pt.y + Math.sin(pt.angle)*18;
+                let rGrad = ctx.createRadialGradient(lx, ly, 0, lx, ly, 90);
+                rGrad.addColorStop(0, 'rgba(255, 240, 180, 0.6)');
+                rGrad.addColorStop(1, 'rgba(255, 240, 180, 0)');
+                ctx.fillStyle = rGrad;
+                ctx.beginPath(); ctx.arc(lx, ly, 90, 0, Math.PI*2); ctx.fill();
+            });
+        }
+
         function drawSky() {
             clouds.forEach(c => {
                 ctx.fillStyle = `rgba(0, 0, 0, 0.15)`; ctx.beginPath();
@@ -985,7 +1050,8 @@
 
             clouds.forEach(c => {
                 c.x += c.speed; if(c.x > width + c.size * 2) c.x = -c.size * 2;
-                ctx.fillStyle = `rgba(255, 255, 255, ${c.opacity})`; ctx.beginPath();
+                ctx.fillStyle = isNight ? `rgba(150, 160, 180, ${c.opacity * 0.5})` : `rgba(255, 255, 255, ${c.opacity})`; 
+                ctx.beginPath();
                 ctx.arc(c.x, c.y, c.size, 0, Math.PI*2); 
                 ctx.arc(c.x + c.size*0.4, c.y - c.size*0.3, c.size*0.6, 0, Math.PI*2); 
                 ctx.arc(c.x + c.size*0.8, c.y - c.size*0.1, c.size*0.7, 0, Math.PI*2); 
@@ -1008,7 +1074,10 @@
                 let p = smokeParticles[i];
                 p.x += p.vx; p.y += p.vy; p.life -= 0.04; p.size += 0.4;
                 if (p.life <= 0) smokeParticles.splice(i, 1);
-                else { ctx.fillStyle = `rgba(220, 220, 220, ${p.life * 0.5})`; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); }
+                else { 
+                    ctx.fillStyle = isNight ? `rgba(100, 100, 100, ${p.life * 0.5})` : `rgba(220, 220, 220, ${p.life * 0.5})`; 
+                    ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI*2); ctx.fill(); 
+                }
             }
         }
 
@@ -1020,7 +1089,7 @@
                 else { 
                     ctx.fillStyle = p.color; 
                     ctx.globalAlpha = p.life;
-                    ctx.fillRect(p.x, p.y, 3.5, 3.5); 
+                    ctx.fillRect(p.x, p.y, 8, 8); 
                     ctx.globalAlpha = 1.0;
                 }
             }
@@ -1099,6 +1168,7 @@
             if (rawPoints.length < 15) { startDrawingPhase(); return; }
             gameState = 'CONFIRM'; try { playClick(); } catch(e) {}
             let closedRaw = closeTrackBezier(rawPoints); previewPoints = smoothTrack(closedRaw, 2);
+            calculateCurvature(previewPoints);
             confirmScreen.style.display = 'block';
         }
 
@@ -1112,7 +1182,7 @@
                     points = makeUniform(applyMovingAverage(smoothed, 10), SPACING);
                     
                     points = reorderPointsToLongestStraight(points);
-                    
+                    calculateCurvature(points);
                     centerTrack(points); 
                     generateSceneryAndStands(); 
                     startCountdown();
@@ -1212,6 +1282,14 @@
             currentThreshold = carClass === 'F1' ? 2.20 : 1.60; 
             currentCornerSpeed = carClass === 'F1' ? 5.5 : 4.5;
             
+            let botProfiles = [
+                { type: 'AGGRESSIVO', maxSpeedMult: 0.52, accelMult: 0.90, lookAheadMult: 11, thresholdMult: 1.05 },
+                { type: 'CONSERVADOR', maxSpeedMult: 0.44, accelMult: 0.78, lookAheadMult: 16, thresholdMult: 0.85 }
+            ];
+            if (Math.random() > 0.5) botProfiles.reverse();
+            capBot.botProfile = botProfiles[0];
+            mariaBot.botProfile = botProfiles[1];
+
             if (gameMode === 'TIME_TRIAL') {
                 allCars = [playerCar];
                 playerCar.offset = 0;
@@ -1294,64 +1372,56 @@
         function drawTrack(targetPoints) {
             if (!targetPoints || targetPoints.length < 2) return;
             
-            // Asfalto Base
+            // Fundo Branco (Limites base)
             ctx.beginPath(); ctx.moveTo(targetPoints[0].x, targetPoints[0].y);
             for (let i = 1; i < targetPoints.length; i++) ctx.lineTo(targetPoints[i].x, targetPoints[i].y);
             ctx.closePath(); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
-            ctx.strokeStyle = '#242528'; ctx.lineWidth = 44; ctx.stroke(); 
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 44; ctx.stroke(); 
+
+            // Asfalto Escuro Realista
+            ctx.strokeStyle = '#222325'; ctx.lineWidth = 38; ctx.stroke(); 
 
             // Zebras Dinâmicas Corrigidas
-            for(let side of [1, -1]) {
-                ctx.lineWidth = 6; ctx.lineCap = 'butt';
-                let isDrawing = false;
-                ctx.beginPath();
-                for(let i=0; i<=targetPoints.length; i++){
-                    let idx = i % targetPoints.length;
-                    let p = targetPoints[idx];
-                    
-                    let p_next = targetPoints[(idx+1)%targetPoints.length];
-                    let tangent = Math.atan2(p_next.y - p.y, p_next.x - p.x);
-                    let norm = tangent + (Math.PI/2) * side;
-                    
-                    let px = p.x + Math.cos(norm) * 23; 
-                    let py = p.y + Math.sin(norm) * 23; 
-
-                    if (Math.abs(p.curve) > 0.05) {
-                        if(!isDrawing) { ctx.moveTo(px, py); isDrawing = true; }
-                        else { ctx.lineTo(px, py); }
-                    } else {
-                        if(isDrawing) { ctx.lineTo(px, py); isDrawing = false; }
+            let zebraPaths = [];
+            let currentZebra = null;
+            for (let i = 0; i <= targetPoints.length; i++) {
+                let idx = i % targetPoints.length;
+                let p = targetPoints[idx];
+                
+                if (Math.abs(p.curve) > 0.045) {
+                    let side = p.curve > 0 ? 1 : -1; 
+                    if (!currentZebra || currentZebra.side !== side) {
+                        if (currentZebra) zebraPaths.push(currentZebra);
+                        currentZebra = { side: side, points: [] };
+                    }
+                    let norm = p.curve > 0 ? p.normal : p.normal - Math.PI;
+                    let px = p.x + Math.cos(norm) * 20; 
+                    let py = p.y + Math.sin(norm) * 20;
+                    currentZebra.points.push({x: px, y: py});
+                } else {
+                    if (currentZebra) {
+                        zebraPaths.push(currentZebra);
+                        currentZebra = null;
                     }
                 }
-                ctx.strokeStyle = '#fff'; ctx.setLineDash([]); ctx.stroke();
+            }
+
+            ctx.lineWidth = 6;
+            ctx.lineCap = 'round';
+            for (let z of zebraPaths) {
+                if (z.points.length < 2) continue;
+                ctx.beginPath();
+                ctx.moveTo(z.points[0].x, z.points[0].y);
+                for(let i=1; i<z.points.length; i++) {
+                    ctx.lineTo(z.points[i].x, z.points[i].y);
+                }
+                ctx.strokeStyle = '#ffffff'; ctx.setLineDash([]); ctx.stroke();
                 ctx.strokeStyle = '#e74c3c'; ctx.setLineDash([12, 12]); ctx.stroke();
             }
-
-            // Linha Branca Contínua (Limites)
             ctx.setLineDash([]);
-            ctx.lineWidth = 1.5; ctx.strokeStyle = '#ffffff';
-            for(let side of [1, -1]) {
-                ctx.beginPath();
-                for (let i = 0; i <= targetPoints.length; i++) {
-                    let idx = i % targetPoints.length;
-                    let p = targetPoints[idx];
-                    let p_next = targetPoints[(idx+1)%targetPoints.length];
-                    let norm = Math.atan2(p_next.y - p.y, p_next.x - p.x) + (Math.PI/2) * side;
-                    let px = p.x + Math.cos(norm) * 20;
-                    let py = p.y + Math.sin(norm) * 20;
-                    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
-                }
-                ctx.stroke();
-            }
-
-            // Linha Tracejada Central
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1.5; ctx.setLineDash([10, 15]); 
-            ctx.beginPath(); ctx.moveTo(targetPoints[0].x, targetPoints[0].y);
-            for (let i = 1; i <= targetPoints.length; i++) ctx.lineTo(targetPoints[i%targetPoints.length].x, targetPoints[i%targetPoints.length].y);
-            ctx.stroke(); ctx.setLineDash([]);
 
             // Skid Marks
-            ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(0,0,0,0.4)'; ctx.lineJoin = 'round';
+            ctx.lineWidth = 1.5; ctx.strokeStyle = 'rgba(0,0,0,0.40)'; ctx.lineJoin = 'round';
             for(let sp of skidPaths) {
                 if(sp.length < 2) continue;
                 let offsets = [-10, -5, 5, 10];
@@ -1361,6 +1431,12 @@
                     ctx.stroke();
                 });
             }
+
+            // Linha Central 
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)'; ctx.lineWidth = 1.5; ctx.setLineDash([10, 15]); 
+            ctx.beginPath(); ctx.moveTo(targetPoints[0].x, targetPoints[0].y);
+            for (let i = 1; i <= targetPoints.length; i++) ctx.lineTo(targetPoints[i%targetPoints.length].x, targetPoints[i%targetPoints.length].y);
+            ctx.stroke(); ctx.setLineDash([]);
 
             // Sombras das Barreiras 16h
             for (let b of barriers) {
@@ -1386,12 +1462,11 @@
                 if (b.type === 'TIRES') drawTire(ctx, b.x, b.y, 4.5);
             }
 
-            // Paddock / Garagens (Início)
+            // Paddock / Garagens
             ctx.save(); ctx.translate(targetPoints[0].x, targetPoints[0].y);
             let ang = Math.atan2(targetPoints[1].y - targetPoints[0].y, targetPoints[1].x - targetPoints[0].x);
             ctx.rotate(ang);
             
-            // Chão do Pit Lane e Muro
             ctx.fillStyle = '#1c1e20'; ctx.fillRect(-20, 24, 160, 20); 
             ctx.fillStyle = '#555'; ctx.fillRect(-20, 24, 160, 2); 
             ctx.fillStyle = '#7f8c8d'; ctx.fillRect(-20, 44, 160, 25);
@@ -1451,8 +1526,19 @@
                 drawSceneryBase(); 
                 drawSceneryProps();
                 drawTrack(points); 
-                allCars.forEach(car => car.draw());
+                allCars.forEach(car => car.drawBase());
                 drawOverheadElements();
+
+                if (isNight) {
+                    ctx.fillStyle = 'rgba(10, 15, 30, 0.7)';
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    ctx.globalCompositeOperation = 'screen';
+                    drawPosteLights();
+                    allCars.forEach(car => car.drawHeadlights(ctx));
+                    ctx.globalCompositeOperation = 'source-over';
+                }
+
                 drawAndUpdateSparks();
                 drawAndUpdateSmoke(); 
                 drawSky();
@@ -1473,14 +1559,24 @@
                 drawSceneryBase(); 
                 drawSceneryProps();
                 drawTrack(previewPoints); 
+                if (isNight) {
+                    ctx.fillStyle = 'rgba(10, 15, 30, 0.7)'; ctx.fillRect(0, 0, width, height);
+                    ctx.globalCompositeOperation = 'screen'; drawPosteLights(); ctx.globalCompositeOperation = 'source-over';
+                }
             } 
             else if (gameState === 'COUNTDOWN') { 
                 ctx.clearRect(0, 0, width, height); 
                 drawSceneryBase(); 
                 drawSceneryProps();
                 drawTrack(points); 
-                allCars.forEach(car => car.draw()); 
+                allCars.forEach(car => car.drawBase()); 
                 drawOverheadElements();
+                if (isNight) {
+                    ctx.fillStyle = 'rgba(10, 15, 30, 0.7)'; ctx.fillRect(0, 0, width, height);
+                    ctx.globalCompositeOperation = 'screen'; drawPosteLights();
+                    allCars.forEach(car => car.drawHeadlights(ctx));
+                    ctx.globalCompositeOperation = 'source-over';
+                }
                 drawSky();
             }
             requestAnimationFrame(renderInterface);

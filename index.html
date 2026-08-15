@@ -289,12 +289,11 @@
         
         // FÍSICA E BALANCEAMENTO
         const SPACING = 5;             
-        const BRAKING_FORCE = 0.04; 
+        const BRAKING_FORCE = 0.04; // Inércia realista
         const BASE_MIN_SPEED = 0;   
         const MIN_DRAW_DIST = 10;
         const TOTAL_LAPS = 6; 
         
-        // SOMBRAS GLOBAIS - "16:00"
         const SHADOW_X = 8;
         const SHADOW_Y = 6;
 
@@ -412,6 +411,8 @@
                 this.inDangerZone = false; 
                 this.willErrorThisCurve = false; 
                 this.currentPosition = 1;
+                this.derailCount = 0; 
+                this.stalled = false; 
                 if(points.length > 0) this.updatePosition();
             }
 
@@ -427,7 +428,14 @@
                     if (now > this.derailTimer) { this.isDerailed = false; } 
                 }
 
-                if (this.isBot) this.processAILogic(now);
+                if (this.isBot) {
+                    this.stalled = false; 
+                    this.processAILogic(now);
+                } else {
+                    if (this.stalled) {
+                        this.isAccelerating = false; 
+                    }
+                }
                 
                 let catchUpMult = 1.0;
                 if (this.currentPosition === 2) catchUpMult = 1.20;
@@ -435,10 +443,6 @@
 
                 let myMaxSpeed = (this.isBot ? currentMaxSpeed * this.botProfile.maxSpeedMult : currentMaxSpeed) * catchUpMult; 
                 let myAccel = (this.isBot ? currentAccel * this.botProfile.accelMult : currentAccel) * catchUpMult;
-
-                if (this.isDerailed) {
-                    myMaxSpeed *= 0.5; 
-                }
 
                 if (this.isAccelerating) {
                     this.speed += myAccel;
@@ -537,8 +541,26 @@
 
                 if (centrifugal > myThreshold && this.speed > currentCornerSpeed && !this.isDerailed) {
                     this.isDerailed = true;
-                    this.derailTimer = now + 2000; 
-                    this.speed *= 0.5; 
+                    this.derailCount++;
+                    
+                    let isHeavyPenalty = false;
+                    if (this.derailCount >= 5 && (this.derailCount - 5) % 2 === 0) {
+                        isHeavyPenalty = true;
+                    }
+
+                    if (isHeavyPenalty) {
+                        this.derailTimer = now + 1500; 
+                        this.speed = 0; 
+                        this.stalled = true;
+                        this.isAccelerating = false;
+                        if (!this.isBot) {
+                            btnAccelerate.classList.remove('active'); 
+                        }
+                    } else {
+                        this.derailTimer = now + 2000; 
+                        this.speed *= 0.5; 
+                    }
+
                     if(this === playerCar) playDrift(); 
                 }
             }
@@ -577,8 +599,6 @@
                     ctx.fillStyle = '#ff3838'; ctx.fillRect(-12, -6, 2, 3); ctx.fillRect(-12, 3, 2, 3); 
                     ctx.fillStyle = '#111'; ctx.fillRect(-14, -6, 3, 12); 
                 }
-
-                if(this.finished) { ctx.fillStyle = "rgba(0,0,0,0.5)"; ctx.fillRect(-14, -10, 30, 20); }
                 ctx.restore();
             }
 
@@ -743,9 +763,7 @@
 
         function generateSceneryAndStands() {
             currentBiome = BIOMES[Math.floor(Math.random() * BIOMES.length)];
-            
-            // 1 em 5 chance de ser noite (4 para 1)
-            isNight = Math.random() < 0.2; 
+            isNight = Math.random() < 0.20; 
             
             generateBackgroundTexture();
             
@@ -875,47 +893,32 @@
 
             let currentSkid = null;
             for (let i = 0; i < points.length; i++) {
-                let p0 = points[(i - 5 + points.length) % points.length];
-                let p1 = points[i];
-                let p2 = points[(i + 5) % points.length];
-
-                let a1 = Math.atan2(p1.y - p0.y, p1.x - p0.x);
-                let a2 = Math.atan2(p2.y - p1.y, p2.x - p1.x);
-                let angleDiff = a2 - a1;
-                while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
-                while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
-
-                let sharpness = Math.abs(angleDiff);
-                let tangent = Math.atan2(p2.y - p0.y, p2.x - p0.x);
-                
-                points[i].curve = angleDiff;
-                points[i].normal = tangent + (Math.PI/2);
-
-                if (sharpness > 0.08) {
-                    let side = angleDiff > 0 ? -1 : 1; 
-                    let normal = tangent + (Math.PI/2) * side;
+                let p = points[i];
+                if (Math.abs(p.curve) > 0.08) {
+                    let side = p.curve > 0 ? -1 : 1; 
+                    let normal = p.normal;
                     
-                    if (sharpness > 0.15 && i % 3 === 0) { 
-                        sandTraps.push({ x: p1.x + Math.cos(normal) * 30, y: p1.y + Math.sin(normal) * 30, r: 18 + Math.random() * 6 });
+                    if (Math.abs(p.curve) > 0.15 && i % 3 === 0) { 
+                        sandTraps.push({ x: p.x + Math.cos(normal) * 30, y: p.y + Math.sin(normal) * 30, r: 18 + Math.random() * 6 });
                         
                         for(let layer=0; layer<2; layer++) {
                             let dist = 38 + layer * 3.5;
                             let offset = (layer % 2 === 0) ? 0 : 2.0;
-                            let bx = p1.x + Math.cos(normal) * dist + Math.cos(tangent) * offset;
-                            let by = p1.y + Math.sin(normal) * dist + Math.sin(tangent) * offset;
+                            let bx = p.x + Math.cos(normal) * dist + Math.cos(p.normal - Math.PI/2) * offset;
+                            let by = p.y + Math.sin(normal) * dist + Math.sin(p.normal - Math.PI/2) * offset;
                             barriers.push({ x: bx, y: by, type: 'TIRES', index: i });
                         }
-                    } else if (sharpness <= 0.15) { 
-                        let bx = p1.x + Math.cos(normal) * 26;
-                        let by = p1.y + Math.sin(normal) * 26;
+                    } else if (Math.abs(p.curve) <= 0.15) { 
+                        let bx = p.x + Math.cos(normal) * 26;
+                        let by = p.y + Math.sin(normal) * 26;
                         barriers.push({ x: bx, y: by, type: 'GUARDRAIL', index: i });
                     }
                 }
 
-                if (sharpness > 0.04) {
+                if (Math.abs(p.curve) > 0.04) {
                     if(!currentSkid) { currentSkid = []; skidPaths.push(currentSkid); }
-                    let norm = tangent + Math.PI/2;
-                    currentSkid.push({ x: p1.x, y: p1.y, nx: Math.cos(norm), ny: Math.sin(norm) });
+                    let norm = p.normal;
+                    currentSkid.push({ x: p.x, y: p.y, nx: Math.cos(norm), ny: Math.sin(norm) });
                 } else {
                     currentSkid = null;
                 }
@@ -1220,12 +1223,15 @@
         function pressAccelerate(e) { 
             if(e && e.preventDefault && e.target !== btnLoadTrack && !e.target.closest('button')) e.preventDefault(); 
             if(gameState === 'RACING' && !isPaused) {
+                if (playerCar.stalled) playerCar.stalled = false; // Permite reconectar o motor ao apertar de novo
                 playerCar.isAccelerating = true; btnAccelerate.classList.add('active'); 
             }
         }
         function releaseAccelerate(e) { 
             if(e && e.preventDefault && e.target !== btnPause) e.preventDefault(); 
-            playerCar.isAccelerating = false; btnAccelerate.classList.remove('active'); 
+            playerCar.isAccelerating = false; 
+            playerCar.stalled = false; // Reseta o afogamento para a proxima vez que apertar
+            btnAccelerate.classList.remove('active'); 
         }
 
         function togglePause(e) {
